@@ -9,12 +9,12 @@ export type MoodType =
   | "shocked"     // 놀람냥
   | "bored"       // 지루냥
   | "depressed"   // 우울냥
-  | "excited"     // 신남냥 (추가)
-  | "scared"      // 겁먹냥 (추가)
-  | "proud"       // 뿌듯냥 (추가)
-  | "curious"     // 궁금냥 (추가)
-  | "guilty"      // 미안냥 (추가)
-  | "relaxed";    // 편안냥 (추가)
+  | "excited"     // 신남냥
+  | "scared"      // 겁먹냥
+  | "proud"       // 뿌듯냥
+  | "curious"     // 궁금냥
+  | "guilty"      // 미안냥
+  | "relaxed";    // 편안냥
 
 export interface CatCharacter {
   type: MoodType;
@@ -98,42 +98,42 @@ export const CAT_CHARACTERS: Record<MoodType, CatCharacter> = {
   excited: {
     type: "excited",
     name: "신남냥 (Excited Cat)",
-    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663712963517/8RRVSLjawLcuSnjpxSgnMb/love_cat-dsgEtsZE45sy9mMnCAYtf4.webp", // 사랑냥과 이미지 호환
+    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663712963517/8RRVSLjawLcuSnjpxSgnMb/love_cat-dsgEtsZE45sy9mMnCAYtf4.webp",
     description: "온몸으로 에너지를 발산하며 너무 신나서 꼬리를 붕붕 흔드는 고양이냥!",
     color: "bg-[#FCE7F3]" // 핑크
   },
   scared: {
     type: "scared",
     name: "겁먹냥 (Scared Cat)",
-    image: "/manus-storage/anxious_cat_242b50dc.png", // 불안냥과 이미지 호환
+    image: "/manus-storage/anxious_cat_242b50dc.png",
     description: "어두운 방구석에서 꼬리를 바짝 내린 채 무서워하고 있는 겁쟁이 고양이냥.",
     color: "bg-[#E0F2FE]" // 스카이블루
   },
   proud: {
     type: "proud",
     name: "뿌듯냥 (Proud Cat)",
-    image: "/manus-storage/unfair_cat_bb093496.png", // 억울냥과 이미지 호환
+    image: "/manus-storage/unfair_cat_bb093496.png",
     description: "자신이 해낸 일을 자랑스러워하며 가슴을 쫙 펴고 당당하게 서 있는 고양이냥!",
     color: "bg-[#FCE7F3]" // 핑크
   },
   curious: {
     type: "curious",
     name: "궁금냥 (Curious Cat)",
-    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663712963517/8RRVSLjawLcuSnjpxSgnMb/shocked_cat-PCbH688vJKsoUdWpkFYcyC.webp", // 놀람냥과 이미지 호환
+    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663712963517/8RRVSLjawLcuSnjpxSgnMb/shocked_cat-PCbH688vJKsoUdWpkFYcyC.webp",
     description: "눈을 반짝이며 드림님의 모든 일상과 비밀을 다 궁금해하는 호기심 천국 고양이냥.",
     color: "bg-[#E0F2FE]" // 스카이블루
   },
   guilty: {
     type: "guilty",
     name: "미안냥 (Guilty Cat)",
-    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663712963517/8RRVSLjawLcuSnjpxSgnMb/shy_cat-TLgWwwHwgWk8QtKSniYTvF.webp", // 부끄냥과 이미지 호환
+    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663712963517/8RRVSLjawLcuSnjpxSgnMb/shy_cat-TLgWwwHwgWk8QtKSniYTvF.webp",
     description: "잘못한 일이 있어 고개를 푹 숙인 채 꼬리를 살랑이며 미안해하는 고양이냥.",
     color: "bg-[#FCE7F3]" // 핑크
   },
   relaxed: {
     type: "relaxed",
     name: "편안냥 (Relaxed Cat)",
-    image: "/manus-storage/lethargic_cat_3adb62ca.png", // 무기력냥과 이미지 호환
+    image: "/manus-storage/lethargic_cat_3adb62ca.png",
     description: "따뜻한 벽난로 앞 러그에 누워 뒹굴거리며 완벽한 평온을 즐기는 고양이냥.",
     color: "bg-[#E0F2FE]" // 스카이블루
   }
@@ -240,7 +240,6 @@ export const QUESTION_BANK: TestQuestion[] = [
       { text: "쓸데없는 잡생각과 걱정 때문에 잠이 잘 안 와 (걱정)", score: { anxious: 3, depressed: 2, lonely: 1 } }
     ]
   },
-  // 추가 10개 문항 (무작위 섞기를 위한 질문 풀 확장)
   {
     id: 11,
     text: "갑자기 일주일 동안의 휴가가 주어졌을 때 나는?",
@@ -328,6 +327,8 @@ export interface ScheduleEvent {
   title: string; // 일정 제목
   mood: string; // 감정 요약
   thanks: string; // 감사 일기 내용
+  customSolution?: string; // 실시간 분석 맞춤 솔루션
+  customMusicRecommendation?: string; // 실시간 추천 음악 명
 }
 
 export interface Message {
@@ -348,4 +349,15 @@ export interface FeedPost {
   comments: { id: string; author: string; text: string; date: string }[];
   date: string;
   hasBestBadge?: boolean; // 상담왕 배지 여부
+}
+
+// 회원 정보 인터페이스
+export interface UserAccount {
+  id: string;
+  username: string;
+  nickname: string;
+  level: number;
+  apples: number;
+  catMood: MoodType;
+  joinDate: string;
 }
