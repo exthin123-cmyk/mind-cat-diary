@@ -30,7 +30,7 @@ import {
   ChevronDown
 } from "lucide-react";
 import { toast } from "sonner";
-import { MoodType, CAT_CHARACTERS, SHOP_ITEMS, ShopItem, ScheduleEvent, Message, FeedPost, TEST_QUESTIONS } from "../lib/types";
+import { MoodType, CAT_CHARACTERS, SHOP_ITEMS, ShopItem, ScheduleEvent, Message, FeedPost, QUESTION_BANK } from "../lib/types";
 
 // 감정별 매칭될 수 있는 로파이 음악 플레이리스트 (Royalty-free)
 const LOFI_PLAYLIST: Record<string, { title: string; url: string }> = {
@@ -46,8 +46,13 @@ export default function Home() {
   // --- 1. 심리 테스트 상태 ---
   const [isTestCompleted, setIsTestCompleted] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  
+  // 무작위로 선택된 10개 질문 풀 보관용
+  const [activeQuestions, setActiveQuestions] = useState<typeof QUESTION_BANK>([]);
+  
   const [testScores, setTestScores] = useState<Record<MoodType, number>>({
-    unfair: 0, anxious: 0, lonely: 0, lethargic: 0, angry: 0, love: 0, shy: 0, shocked: 0, bored: 0, depressed: 0
+    unfair: 0, anxious: 0, lonely: 0, lethargic: 0, angry: 0, love: 0, shy: 0, shocked: 0, bored: 0, depressed: 0,
+    excited: 0, scared: 0, proud: 0, curious: 0, guilty: 0, relaxed: 0
   });
 
   // --- 2. 기본 상태 관리 ---
@@ -141,6 +146,32 @@ export default function Home() {
   const [isMailOpen, setIsMailOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
+  // 광고 설정 실시간 관리자 관리 기능 연동
+  const [adText, setAdText] = useState("🍎 맛있는 유기농 청송 사과 1+1 한정 특가 세일!");
+  const [adLink, setAdLink] = useState("https://example.com");
+
+  // 고양이 일일 안부 메시지 은행
+  const [dailyCatMessage, setDailyCatMessage] = useState("오늘 하루도 무사히 마쳐서 너무 다행이다냥. 맛있는 저녁 먹기냥! 🐾");
+
+  // 질문 은행에서 10문항 무작위 추출하여 셋팅
+  useEffect(() => {
+    const shuffled = [...QUESTION_BANK].sort(() => 0.5 - Math.random());
+    setActiveQuestions(shuffled.slice(0, 10));
+  }, []);
+
+  // 하루 메시지 자동 업데이트 시뮬레이션
+  useEffect(() => {
+    const messages = [
+      "오늘도 수고 많았다냥! 따뜻한 차 한잔하면서 피로를 날려버리자냥. 🍵",
+      "드림님, 혹시 오늘 억울하거나 힘든 일이 있었다면 나한테 다 말해달라냥! 🐾",
+      "드림님의 마음은 항상 내가 곁에서 따뜻하게 지켜주고 있다냥. 💖",
+      "하아암... 오늘 밤엔 포근하게 꿀잠 자고 좋은 꿈 꾸기냥! 😴💤",
+      "사소한 일에도 기뻐할 줄 아는 드림님은 정말 소중하고 예쁜 존재다냥. ✨"
+    ];
+    const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+    setDailyCatMessage(randomMsg);
+  }, [activeTab]);
+
   // --- 10. 경험치 획득 및 레벨업 로직 ---
   const gainExp = (amount: number, actionType: string) => {
     setExp(prev => {
@@ -198,7 +229,7 @@ export default function Home() {
   };
 
   // --- 12. 심리테스트 선택 및 고양이 매칭 ---
-  const handleAnswerSelect = (score: Record<MoodType, number>) => {
+  const handleAnswerSelect = (score: Partial<Record<MoodType, number>>) => {
     // 점수 누적
     setTestScores(prev => {
       const updated = { ...prev };
@@ -209,7 +240,7 @@ export default function Home() {
     });
 
     const nextIndex = currentQuestionIndex + 1;
-    if (nextIndex < TEST_QUESTIONS.length) {
+    if (nextIndex < activeQuestions.length) {
       setCurrentQuestionIndex(nextIndex);
     } else {
       // 10문항 끝났을 때 최고 점수의 고양이 찾기
@@ -442,6 +473,7 @@ export default function Home() {
     if (currentWallpaper === "w1") return "bg-[#ECFDF5] border-2 border-emerald-100"; 
     if (currentWallpaper === "w2") return "bg-[#0F172A] text-white border-2 border-slate-800"; 
     if (currentWallpaper === "w3") return "bg-[#FFF1F2] border-2 border-pink-100"; 
+    if (currentWallpaper === "w4") return "bg-[#F0F9FF] border-2 border-blue-100"; 
     return "bg-[#FAF8F5] border border-gray-100"; 
   };
 
@@ -484,19 +516,19 @@ export default function Home() {
   };
 
   // --- 심리테스트 미완료 시 테스트 화면 노출 ---
-  if (!isTestCompleted) {
-    const q = TEST_QUESTIONS[currentQuestionIndex];
+  if (!isTestCompleted || activeQuestions.length === 0) {
+    const q = activeQuestions[currentQuestionIndex] || QUESTION_BANK[0];
     return (
       <div className="flex-1 flex flex-col justify-between p-6 bg-white font-sans h-full overflow-y-auto">
         <div className="text-center space-y-2 mt-6">
           <div className="inline-block px-3 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded-full">
-            마인드캣 심리테스트 ({q.id}/10)
+            마인드캣 심리테스트 ({currentQuestionIndex + 1}/10)
           </div>
           <h2 className="text-xl font-black text-gray-800 tracking-tight leading-snug">
             나와 어울리는 감정냥이는 누구일까?
           </h2>
           <p className="text-xs text-gray-500 font-medium">
-            질문에 솔직하게 답변하면 어울리는 고양이와 꾸미기 소품이 매칭된다냥!
+            검사할 때마다 새로운 질문지로 어울리는 고양이와 꾸미기 소품이 매칭된다냥!
           </p>
         </div>
 
@@ -524,7 +556,7 @@ export default function Home() {
           <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
             <div 
               className="h-full bg-blue-500 transition-all duration-300"
-              style={{ width: `${(q.id / 10) * 100}%` }}
+              style={{ width: `${((currentQuestionIndex + 1) / 10) * 100}%` }}
             ></div>
           </div>
           <div className="text-center text-[10px] text-gray-400 font-bold">
@@ -610,12 +642,12 @@ export default function Home() {
         {activeTab === "room" && (
           <div className="p-5 space-y-5 h-full flex flex-col justify-between min-h-[460px]">
             
-            {/* 고양이 말풍선 */}
+            {/* 고양이 일일 안부 메시지 고정 노출 */}
             <div className="w-full flex justify-center">
               <div className="relative w-full max-w-[320px]">
-                <div className="bg-gray-50 border border-gray-100 rounded-2xl p-3.5 text-center font-bold text-xs md:text-sm text-gray-700 leading-relaxed relative shadow-sm">
-                  {bubbleText}
-                  <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-gray-50 border-r border-b border-gray-100 rotate-45"></div>
+                <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-3.5 text-center font-bold text-xs md:text-sm text-blue-600 leading-relaxed relative shadow-sm">
+                  📢 {catName}의 오늘 안부: {dailyCatMessage}
+                  <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-50/50 border-r border-b border-blue-100 rotate-45"></div>
                 </div>
               </div>
             </div>
@@ -635,6 +667,8 @@ export default function Home() {
                     if (item.id === "f3") return <div key={item.id} className="absolute right-8 bottom-8 text-4xl">🐟</div>;
                     if (item.id === "f4") return <div key={item.id} className="absolute left-6 bottom-4 text-5xl">⛺</div>;
                     if (item.id === "f5") return <div key={item.id} className="absolute right-6 bottom-4 text-4xl">🥛</div>;
+                    if (item.id === "f6") return <div key={item.id} className="absolute left-1/2 -translate-x-1/2 bottom-12 text-5xl z-20">🛋️</div>;
+                    if (item.id === "f7") return <div key={item.id} className="absolute right-12 bottom-12 text-4xl">🪵</div>;
                   }
                   if (item.category === "accessory") {
                     if (item.id === "a1") return <div key={item.id} className="absolute left-1/2 -translate-x-1/2 bottom-24 text-3xl z-30 animate-pulse">🌸</div>;
@@ -642,12 +676,14 @@ export default function Home() {
                     if (item.id === "a3") return <div key={item.id} className="absolute left-1/2 -translate-x-1/2 bottom-28 text-3xl z-30">🕶️</div>;
                     if (item.id === "a4") return <div key={item.id} className="absolute left-1/2 -translate-x-1/2 bottom-36 text-3xl z-30 animate-bounce">👑</div>;
                     if (item.id === "a5") return <div key={item.id} className="absolute left-1/2 -translate-x-1/2 bottom-28 text-3xl z-30">👓</div>;
+                    if (item.id === "a6") return <div key={item.id} className="absolute left-1/2 -translate-x-1/2 bottom-32 text-3xl z-30">🧙</div>;
+                    if (item.id === "a7") return <div key={item.id} className="absolute left-1/2 -translate-x-1/2 bottom-24 text-3xl z-0 animate-pulse">👼</div>;
                   }
                   return null;
                 })}
               </div>
 
-              {/* 고양이 캐릭터 본체 (심리테스트 결과로 매칭된 고유 고양이 고정) */}
+              {/* 고양이 캐릭터 본체 */}
               <div className="relative z-10 flex flex-col items-center cursor-pointer group mt-4" onClick={() => {
                 setBubbleText(`나를 터치해줘서 고맙다냥! [${CAT_CHARACTERS[catMood].name}]인 나는 언제나 드림님 편이다냥! 💕`);
                 gainExp(5, "고양이 교감");
@@ -997,7 +1033,7 @@ export default function Home() {
           <div className="p-5 space-y-5">
             <div>
               <h2 className="text-base font-bold text-gray-800">관리자 대시보드</h2>
-              <p className="text-xs text-gray-500">서비스 운영 현황 및 테스트용 치트 패널냥 🛡️</p>
+              <p className="text-xs text-gray-500">서비스 운영 현황 및 광고 링크 실시간 수정 패널냥 🛡️</p>
             </div>
 
             {!isAdminLoggedIn ? (
@@ -1040,7 +1076,40 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* 관리자 치트키 제어 (테스트용) */}
+                {/* 실시간 광고 링크 및 문구 설정 영역 */}
+                <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm space-y-4">
+                  <h3 className="font-bold text-xs text-gray-800 border-b border-gray-50 pb-2 flex items-center gap-1.5">
+                    📢 실시간 하단 광고 배너 관리
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-400">광고 배너 문구</label>
+                      <input 
+                        type="text" 
+                        value={adText}
+                        onChange={(e) => setAdText(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 font-bold text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-400">광고 아웃링크 URL</label>
+                      <input 
+                        type="text" 
+                        value={adLink}
+                        onChange={(e) => setAdLink(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 font-bold text-xs"
+                      />
+                    </div>
+                    <button 
+                      onClick={() => toast.success("광고 배너 설정이 실시간 반영되었다냥! 🍎")}
+                      className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-lg"
+                    >
+                      광고 배너 실시간 업데이트
+                    </button>
+                  </div>
+                </div>
+
+                {/* 관리자 치트키 제어 */}
                 <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm space-y-4">
                   <h3 className="font-bold text-xs text-gray-800 border-b border-gray-50 pb-2 flex items-center gap-1.5">
                     <TrendingUp className="w-4 h-4 text-blue-500" /> 테스트 전용 제어기
@@ -1100,13 +1169,13 @@ export default function Home() {
       <div className="absolute bottom-20 left-0 right-0 h-12 bg-gray-50 border-t border-b border-gray-100 px-5 flex items-center justify-between z-10">
         <div className="flex items-center gap-2">
           <span className="text-[8px] bg-gray-300 text-gray-600 px-1 rounded font-bold">AD</span>
-          <span className="text-[10px] font-bold text-gray-500">🍎 맛있는 유기농 청송 사과 1+1 한정 특가 세일!</span>
+          <span className="text-[10px] font-bold text-gray-500 truncate max-w-[220px]">{adText}</span>
         </div>
         <a 
-          href="https://example.com" 
+          href={adLink} 
           target="_blank" 
           rel="noreferrer"
-          className="text-[9px] text-blue-500 font-bold flex items-center gap-0.5 hover:underline"
+          className="text-[9px] text-blue-500 font-bold flex items-center gap-0.5 hover:underline shrink-0"
         >
           바로가기 <ExternalLink className="w-2.5 h-2.5" />
         </a>
@@ -1431,7 +1500,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- MODAL:  레벨업 축하 모달 --- */}
+      {/* --- MODAL: 레벨업 축하 모달 --- */}
       {isLevelUpModalOpen && (
         <div className="absolute inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
           <div 
