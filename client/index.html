@@ -1,21 +1,32 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 
   <head>
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <title>{{project_title}}</title>    
-    <!-- THIS IS THE START OF A COMMENT BLOCK, BLOCK TO BE DELETED: Google Fonts here, example:
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Mind Cat Diary | 검은 고양이 드림이와 나누는 감정 일기</title>    
+    <!-- 프리텐다드 폰트 적용 (가독성 높은 한글 샌스세리프) -->
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+    <!-- 네오 브루탈리즘 느낌의 영문/숫자용 힙한 폰트 (Syne, Montserrat) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    THIS IS THE END OF A COMMENT BLOCK, BLOCK TO BE DELETED -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+    
+    <style>
+      body {
+        font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+      }
+      .font-display {
+        font-family: 'Syne', 'Montserrat', 'Pretendard', sans-serif;
+      }
+    </style>
   </head>
 
-  <body>
-    <div id="root"></div>
+  <body class="bg-[#F3F4F6] flex justify-center items-center min-h-screen">
+    <!-- 모바일 앱 목업 프레임 역할을 할 루트 컨테이너 -->
+    <div id="root" class="w-full max-w-[440px] h-[100dvh] md:h-[880px] bg-background md:rounded-[40px] md:border-[12px] md:border-black md:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] md:relative overflow-hidden flex flex-col"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script
       defer
