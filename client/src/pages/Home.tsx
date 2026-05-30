@@ -52,7 +52,7 @@ export default function Home() {
 
   // --- 2. 기본 상태 관리 ---
   const [activeTab, setActiveTab] = useState<"room" | "chat" | "calendar" | "community" | "admin">("room");
-  const [catMood, setCatMood] = useState<MoodType>("unfair");
+  const [catMood, setCatMood] = useState<MoodType>("unfair"); // 심리테스트 결과 매칭된 고양이 감정
   const [userName, setUserName] = useState("드림님");
   const [catName, setCatName] = useState("드림이");
   const [adoptDays, setAdoptDays] = useState(10);
@@ -225,6 +225,17 @@ export default function Home() {
 
       setCatMood(selectedCat);
       setIsTestCompleted(true);
+      
+      // 고양이 매칭 후 초기 메시지 셋팅
+      setMessages([
+        { 
+          id: "m1", 
+          sender: "cat", 
+          text: `안녕 드림님! 나는 심리테스트로 매칭된 드림님의 평생 단짝 [${CAT_CHARACTERS[selectedCat].name}]이다냥! 오늘 하루는 어땠어냥? 무슨 일이든 다 나한테 털어놓으라냥! 🐾`, 
+          timestamp: "10:00" 
+        }
+      ]);
+      setBubbleText(`안녕 드림님! 나는 [${CAT_CHARACTERS[selectedCat].name}]이다냥!`);
       toast.success(`🎉 심리테스트 완료! 당신에게 딱 맞는 동반자 [${CAT_CHARACTERS[selectedCat].name}]가 매칭되었다냥!`);
     }
   };
@@ -241,27 +252,24 @@ export default function Home() {
     setChatInput("");
     gainExp(15, "드림이와 1:1 심리상담");
 
-    // 고양이 자동 냥체 답변
+    // 고양이 자동 냥체 답변 (심리테스트 결과 매칭된 고양이 성격에 맞춰 대답 흐름을 개선)
     setTimeout(() => {
       let catReply = "";
       const lower = userText.toLowerCase();
+      const currentCatName = CAT_CHARACTERS[catMood].name;
 
       if (lower.includes("안녕") || lower.includes("하이")) {
-        catReply = `반갑다냥! 오늘 날씨처럼 기분 좋은 하루 보내고 있냐냥? ☀️`;
+        catReply = `안녕 드림님! [${currentCatName}]이 반갑게 손을 흔든다냥! 오늘 기분 좋은 하루 보냈냐냥? ☀️`;
       } else if (lower.includes("슬퍼") || lower.includes("우울") || lower.includes("힘들어")) {
-        catReply = `속상해하지 말라냥... 내가 따뜻한 꾹꾹이로 위로해 주겠다냥. 토닥토닥 힘내라냥 🐾❤️`;
-        setCatMood("depressed");
+        catReply = `많이 힘들었겠다냥... 토닥토닥. [${currentCatName}]인 내가 드림님 곁에서 따뜻하게 안아줄 테니 걱정 말라냥. 슬픈 감정도 다 소중한 과정이다냥 🐾❤️`;
       } else if (lower.includes("행복") || lower.includes("기뻐") || lower.includes("신나")) {
-        catReply = `우와냥! 드림님이 기쁘다니 나도 기분 좋아서 사과 한 입 앙! 베어 물고 싶다냥! 🍎⚡`;
-        setCatMood("love");
+        catReply = `우와냥! 드림님이 행복하다니 [${currentCatName}]인 나도 꼬리가 절로 살랑살랑 춤을 춘다냥! 이 행복을 사과 🍎처럼 소중하게 간직하자냥!`;
       } else if (lower.includes("졸려") || lower.includes("피곤") || lower.includes("잘래")) {
-        catReply = `하아암... 오늘 하루도 너무 수고 많았다냥. 이불 푹 덮고 좋은 꿈 꾸며 꿀잠 자라냥 😴💤`;
-        setCatMood("lethargic");
+        catReply = `오늘 정말 수고 많았다냥. [${currentCatName}]이도 이제 잘 준비 완료다냥. 포근한 베개 꼭 베고 예쁜 꿈 꾸며 꿀잠 자라냥 😴💤`;
       } else if (lower.includes("불안") || lower.includes("걱정")) {
-        catReply = `너무 걱정하지 말라냥. 종이 상자 속에 들어온 것처럼 마음을 편안하게 먹으라냥. 다 잘 될 거다냥! 📦🐾`;
-        setCatMood("anxious");
+        catReply = `걱정하지 말라냥. 불안할 땐 나랑 같이 숨을 크게 들이마시고 내쉬어보자냥. 내가 항상 곁에서 지켜주겠다냥 🐾`;
       } else {
-        catReply = `그렇구냥! 드림님의 솔직한 이야기를 들려줘서 고맙다냥. 항상 내 귀는 쫑긋 열려있다냥! 🐾`;
+        catReply = `그렇구냥! [${currentCatName}]이는 드림님의 모든 이야기를 다 기억하고 이해하고 싶다냥. 편하게 더 얘기해달라냥! 🐾`;
       }
 
       setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), sender: "cat", text: catReply, timestamp: timeStr }]);
@@ -639,12 +647,9 @@ export default function Home() {
                 })}
               </div>
 
-              {/* 고양이 캐릭터 본체 */}
+              {/* 고양이 캐릭터 본체 (심리테스트 결과로 매칭된 고유 고양이 고정) */}
               <div className="relative z-10 flex flex-col items-center cursor-pointer group mt-4" onClick={() => {
-                const moods: MoodType[] = ["unfair", "anxious", "lonely", "lethargic", "angry", "love", "shy", "shocked", "bored", "depressed"];
-                const nextMood = moods[(moods.indexOf(catMood) + 1) % moods.length];
-                setCatMood(nextMood);
-                setBubbleText(`${CAT_CHARACTERS[nextMood].name}로 변신했다냥! 어떠냐냥?`);
+                setBubbleText(`나를 터치해줘서 고맙다냥! [${CAT_CHARACTERS[catMood].name}]인 나는 언제나 드림님 편이다냥! 💕`);
                 gainExp(5, "고양이 교감");
               }}>
                 {/* 발판 그림자 */}
@@ -656,8 +661,9 @@ export default function Home() {
                   className="w-48 h-48 object-contain relative z-10 transition-transform group-hover:-translate-y-1.5 duration-300"
                 />
                 
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
-                  {CAT_CHARACTERS[catMood].name}
+                {/* 고양이 이름 상시 노출 */}
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] font-bold px-3 py-0.5 rounded-full whitespace-nowrap border border-gray-700 shadow-sm">
+                  {catName} ({CAT_CHARACTERS[catMood].name.split(" ")[0]})
                 </div>
               </div>
 
@@ -687,40 +693,54 @@ export default function Home() {
         )}
 
         {/* =======================================================
-            2. AI 1:1 상담 탭 (Chat)
+            2. AI 1:1 상담 탭 (독립된 풀스크린 메신저 레이아웃)
            ======================================================= */}
         {activeTab === "chat" && (
-          <div className="flex flex-col h-full bg-white">
-            <div className="px-5 py-3 bg-blue-50 border-b border-blue-100 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center border border-blue-100">
-                <img src={CAT_CHARACTERS[catMood].image} alt="Profile" className="w-7 h-7 object-contain" />
+          <div className="absolute inset-0 bottom-20 bg-white flex flex-col z-20">
+            {/* 메신저 헤더 고정 */}
+            <div className="px-5 py-3 bg-blue-50 border-b border-blue-100 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-white overflow-hidden flex items-center justify-center border border-blue-200">
+                  <img src={CAT_CHARACTERS[catMood].image} alt="Profile" className="w-7 h-7 object-contain" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-gray-800 flex items-center gap-1">
+                    {catName} <span className="text-[8px] bg-blue-500 text-white px-1.5 py-0.2 rounded">AI 상담사</span>
+                  </h3>
+                  <p className="text-[10px] text-blue-500 font-bold">
+                    현재 매칭: {CAT_CHARACTERS[catMood].name}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-sm text-gray-800">{catName} <span className="text-[9px] bg-blue-500 text-white px-1.5 py-0.5 rounded ml-1">AI 단짝</span></h3>
-                <p className="text-xs text-gray-500">당신의 고민을 털어놓으면 드림이가 맞춤 상담을 해준다냥!</p>
-              </div>
+              
+              <button 
+                onClick={() => setActiveTab("room")}
+                className="text-xs text-gray-500 hover:text-gray-700 font-bold bg-white px-2.5 py-1 rounded-lg border border-gray-150"
+              >
+                방으로 가기
+              </button>
             </div>
 
-            {/* 메시지 리스트 */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-4 min-h-[340px]">
+            {/* 메시지 리스트 스크롤 영역 */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-[#F8FAFC]">
               {messages.map((msg) => (
                 <div 
                   key={msg.id} 
                   className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
                 >
                   {msg.sender === "cat" && (
-                    <div className="w-8 h-8 rounded-full bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center mr-2 mt-1 shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-white border border-gray-150 overflow-hidden flex items-center justify-center mr-2 mt-1 shrink-0 shadow-sm">
                       <img src={CAT_CHARACTERS[catMood].image} alt="Cat" className="w-6 h-6 object-contain" />
                     </div>
                   )}
                   
-                  <div className={`max-w-[75%] p-3.5 rounded-2xl font-bold text-xs md:text-sm leading-relaxed border ${
+                  <div className={`max-w-[75%] p-3.5 rounded-2xl font-bold text-xs md:text-sm leading-relaxed shadow-sm ${
                     msg.sender === "user" 
-                      ? "bg-gray-800 text-white border-gray-800 rounded-tr-none" 
-                      : "bg-gray-50 text-gray-700 border-gray-100 rounded-tl-none"
+                      ? "bg-gray-800 text-white rounded-tr-none" 
+                      : "bg-white text-gray-700 border border-gray-100 rounded-tl-none"
                   }`}>
                     {msg.text}
-                    <div className={`text-[9px] mt-1 ${msg.sender === "user" ? "text-gray-400 text-right" : "text-gray-400"}`}>
+                    <div className={`text-[8px] mt-1 ${msg.sender === "user" ? "text-gray-400 text-right" : "text-gray-400"}`}>
                       {msg.timestamp}
                     </div>
                   </div>
@@ -729,18 +749,18 @@ export default function Home() {
               <div ref={chatEndRef} />
             </div>
 
-            {/* 채팅 입력창 */}
-            <form onSubmit={handleSendChat} className="p-4 border-t border-gray-100 bg-white flex gap-2">
+            {/* 메신저 입력창 하단 고정 */}
+            <form onSubmit={handleSendChat} className="p-3 border-t border-gray-100 bg-white flex gap-2 shrink-0">
               <input 
                 type="text" 
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                placeholder={`${catName}이에게 오늘 하루 고민을 들려달라냥...`}
-                className="flex-1 px-4 py-3 rounded-xl border border-gray-200 bg-white font-bold text-xs md:text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                placeholder={`${catName}이에게 속마음을 들려달라냥...`}
+                className="flex-1 px-4 py-3 rounded-xl border border-gray-200 bg-white font-bold text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
               <button 
                 type="submit"
-                className="p-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-colors shadow-sm"
+                className="p-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-colors shadow-sm shrink-0"
               >
                 <Send className="w-4 h-4" />
               </button>
@@ -1252,7 +1272,7 @@ export default function Home() {
                 onClick={() => setIsSettingsOpen(false)}
                 className="p-1 rounded-lg hover:bg-gray-50"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4 text-gray-400" />
               </button>
             </div>
 
@@ -1411,11 +1431,11 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- MODAL: 레벨업 축하 모달 (경험치 레벨업 이후 넘어가는 모달) --- */}
+      {/* --- MODAL:  레벨업 축하 모달 --- */}
       {isLevelUpModalOpen && (
         <div className="absolute inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
           <div 
-            onClick={() => setIsLevelUpUpModalOpen(false)} // 탭하면 부드럽게 넘어가도록 함
+            onClick={() => setIsLevelUpUpModalOpen(false)}
             className="w-full max-w-[320px] bg-white rounded-3xl p-6 text-center space-y-4 border border-gray-100 shadow-2xl cursor-pointer animate-in zoom-in-95 duration-200"
           >
             <div className="text-4xl">🎉🍎👑</div>
