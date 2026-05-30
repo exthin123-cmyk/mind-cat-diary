@@ -11,25 +11,25 @@ export const CAT_CHARACTERS: Record<MoodType, CatCharacter> = {
   unfair: {
     type: "unfair",
     name: "드림이 (Unfair Cat)",
-    image: "/manus-storage/unfair_cat_445e67f2.png",
+    image: "/manus-storage/unfair_cat_bb093496.png",
     description: "새파란 사과를 소중하게 꼭 쥐고 있는, 별빛 눈망울의 검은 고양이냥!"
   },
   anxious: {
     type: "anxious",
     name: "불안이 (Anxious Cat)",
-    image: "/manus-storage/anxious_cat_267b05d3.png",
+    image: "/manus-storage/anxious_cat_242b50dc.png",
     description: "종이 상자 안에 쏙 들어가서 조심스럽게 주변을 살피는 귀여운 겁쟁이 고양이냥..."
   },
   lonely: {
     type: "lonely",
     name: "외로움이 (Lonely Cat)",
-    image: "/manus-storage/lonely_cat_f6458b7c.png",
+    image: "/manus-storage/lonely_cat_dbdd7a45.png",
     description: "조그만 하얀 곰 인형을 꼭 껴안고 외로움을 달래는 아기 고양이냥."
   },
   lethargic: {
     type: "lethargic",
     name: "무기력이 (Lethargic Cat)",
-    image: "/manus-storage/lethargic_cat_2f463e60.png",
+    image: "/manus-storage/lethargic_cat_3adb62ca.png",
     description: "귀여운 밤하늘 고깔모자를 쓰고 베개를 꼭 껴안은 채 쿨쿨 잠든 고양이냥."
   }
 };

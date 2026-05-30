@@ -89,7 +89,7 @@ export default function Home() {
       id: "p1",
       author: "냥이집사3호",
       authorLevel: 5,
-      avatar: "/manus-storage/unfair_cat_445e67f2.png",
+      avatar: "/manus-storage/unfair_cat_bb093496.png",
       content: "오늘 드림이랑 대화하다가 레벨업했어냥! 사과 3개 받아서 바로 선글라스 사줬는데 너무 힙하고 귀엽지 않냐냥? 😎🍎",
       likes: 12,
       likedByMe: false,
@@ -103,7 +103,7 @@ export default function Home() {
       id: "p2",
       author: "행복한하루",
       authorLevel: 3,
-      avatar: "/manus-storage/lonely_cat_f6458b7c.png",
+      avatar: "/manus-storage/lonely_cat_dbdd7a45.png",
       content: "달력에 감사일기 매일 쓰니까 마음이 한결 편안해지는 것 같다냥. 사소한 일상에도 감사함을 느끼는 게 중요한 것 같다냥... 🌸✨",
       likes: 8,
       likedByMe: true,
@@ -451,7 +451,7 @@ export default function Home() {
             </div>
 
             {/* 고양이 아늑한 방 (꾸미기 가구 배치되는 공간) */}
-            <div className={`flex-1 min-h-[260px] max-h-[340px] neo-border rounded-3xl relative overflow-hidden flex flex-col items-center justify-end p-6 ${getRoomBackgroundClass()}`}>
+            <div className={`flex-1 min-h-[300px] max-h-[380px] neo-border rounded-3xl relative overflow-hidden flex flex-col items-center justify-center p-6 ${getRoomBackgroundClass()}`}>
               
               {/* 장착된 가구/악세서리 렌더링 */}
               <div className="absolute inset-0 pointer-events-none">
@@ -475,7 +475,7 @@ export default function Home() {
               </div>
 
               {/* 고양이 캐릭터 본체 */}
-              <div className="relative z-10 flex flex-col items-center cursor-pointer group" onClick={() => {
+              <div className="relative z-10 flex flex-col items-center cursor-pointer group mt-4" onClick={() => {
                 const moods: MoodType[] = ["unfair", "anxious", "lonely", "lethargic"];
                 const nextMood = moods[(moods.indexOf(catMood) + 1) % moods.length];
                 setCatMood(nextMood);
@@ -483,16 +483,16 @@ export default function Home() {
                 gainExp(5, "고양이 교감");
               }}>
                 {/* 발판 그림자 */}
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-32 h-6 bg-primary rounded-full border-2 border-black opacity-80 transition-transform group-hover:scale-110"></div>
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-40 h-8 bg-primary rounded-full border-2 border-black opacity-80 transition-transform group-hover:scale-110"></div>
                 
-                {/* 크롭한 실제 고양이 일러스트 이미지 적용 */}
+                {/* 크롭한 실제 고양이 일러스트 이미지 적용 - 큼직하게 나오도록 크기 키움 */}
                 <img 
                   src={CAT_CHARACTERS[catMood].image} 
                   alt={CAT_CHARACTERS[catMood].name} 
-                  className="w-44 h-44 object-contain relative z-10 transition-transform group-hover:-translate-y-2.5 duration-300"
+                  className="w-56 h-56 object-contain relative z-10 transition-transform group-hover:-translate-y-2.5 duration-300"
                 />
                 
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white font-display text-[10px] font-black px-2.5 py-0.5 rounded-full border border-black whitespace-nowrap">
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-black text-white font-display text-[10px] font-black px-2.5 py-0.5 rounded-full border border-black whitespace-nowrap">
                   {CAT_CHARACTERS[catMood].name}
                 </div>
               </div>
