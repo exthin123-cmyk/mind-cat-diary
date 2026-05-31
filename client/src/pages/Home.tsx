@@ -6,11 +6,12 @@ import {
   MessageSquare, Calendar as CalendarIcon, Settings, Mail, Send, Plus,
   ChevronLeft, ChevronRight, Heart, Trash2, X, Music, ShoppingBag, Users,
   Shield, MessageCircle, TrendingUp, ExternalLink, CreditCard, LogIn,
-  UserPlus, BarChart2
+  UserPlus, BarChart2, BookOpen
 } from "lucide-react";
 import { toast } from "sonner";
 import { MoodType, CAT_CHARACTERS, SHOP_ITEMS, ShopItem, ScheduleEvent, FeedPost, QUESTION_BANK } from "../lib/types";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis } from "recharts";
+import Dex from "./Dex";
 
 const LOFI_PLAYLIST: Record<string, { title: string; url: string }> = {
   "기쁨 😊": { title: "포근한 햇살 Lofi ☀️", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
@@ -61,7 +62,9 @@ export default function Home() {
   });
 
   // --- 기본 상태 ---
-  const [activeTab, setActiveTab] = useState<"room" | "chat" | "calendar" | "community" | "report" | "admin">("room");
+  const [activeTab, setActiveTab] = useState<"room" | "chat" | "calendar" | "community" | "report" | "dex" | "admin">("room");
+  // 수집된 냥이 목록 (심리테스트 결과로 해금)
+  const [collectedCats, setCollectedCats] = useState<MoodType[]>(["unfair"]);  // 기본 억울냥은 항상 수집됨
   const [catMood, setCatMood] = useState<MoodType>("unfair");
   const [userName, setUserName] = useState("드림님");
   const [catName, setCatName] = useState("드림이");
@@ -242,10 +245,16 @@ export default function Home() {
       (Object.keys(testScores) as MoodType[]).forEach(key => { if (testScores[key] > maxScore) { maxScore = testScores[key]; selectedCat = key; } });
       setCatMood(selectedCat);
       setIsTestCompleted(true);
+      // 심리테스트 결과 냥이를 도감에 추가
+      setCollectedCats(prev => prev.includes(selectedCat) ? prev : [...prev, selectedCat]);
       setMessages([{ id: "m1", sender: "cat", text: `안녕 드림님! 나는 심리테스트로 매칭된 드림님의 평생 단짝 [${CAT_CHARACTERS[selectedCat].name}]이다냥! 오늘 하루는 어땠어냥? 🐾`, timestamp: "10:00" }]);
       setBubbleText(`안녕 드림님! 나는 [${CAT_CHARACTERS[selectedCat].name}]이다냥!`);
       if (isAuthenticated) updateProfileMutation.mutate({ catMood: selectedCat });
       toast.success(`🎉 심리테스트 완료! [${CAT_CHARACTERS[selectedCat].name}]가 매칭되었다냥!`);
+      // 레벨 조건에 따른 추가 냥이 해금
+      if (level >= 3 && !collectedCats.includes("shocked")) setCollectedCats(prev => [...prev, "shocked"]);
+      if (level >= 5 && !collectedCats.includes("excited")) setCollectedCats(prev => [...prev, "excited"]);
+      if (level >= 7 && !collectedCats.includes("proud")) setCollectedCats(prev => [...prev, "proud"]);
     }
   };
 
@@ -823,6 +832,23 @@ export default function Home() {
           </div>
         )}
 
+        {/* 도감 탭 */}
+        {activeTab === "dex" && (
+          <div className="absolute inset-0 bottom-20 z-20 overflow-hidden">
+            <Dex
+              collectedCats={collectedCats}
+              currentCatMood={catMood}
+              level={level}
+              onSetCat={(mood) => {
+                setCatMood(mood);
+                setBubbleText(`[${CAT_CHARACTERS[mood].name}]로 변경했다냥! 반갑다냥! 💕`);
+                setActiveTab("room");
+                toast.success(`[${CAT_CHARACTERS[mood].name}]를 방에 배치했다냥! 🐾`);
+              }}
+            />
+          </div>
+        )}
+
         {/* 관리자 탭 */}
         {activeTab === "admin" && (
           <div className="p-5 space-y-5">
@@ -882,14 +908,24 @@ export default function Home() {
         <a href={adLink} target="_blank" rel="noreferrer" className="text-[9px] text-blue-500 font-bold flex items-center gap-0.5 hover:underline shrink-0">바로가기 <ExternalLink className="w-2.5 h-2.5" /></a>
       </div>
 
-      {/* 하단 네비게이션 (6탭) */}
-      <nav className="absolute bottom-0 left-0 right-0 h-20 bg-white border-t border-gray-100 flex items-center justify-around px-2 z-10 shadow-lg">
-        <button onClick={() => setActiveTab("chat")} className={`flex flex-col items-center justify-center w-10 h-10 rounded-xl transition-all ${activeTab === "chat" ? "text-blue-500 scale-105" : "text-gray-400"}`}><MessageSquare className="w-5 h-5" /></button>
-        <button onClick={() => setActiveTab("calendar")} className={`flex flex-col items-center justify-center w-10 h-10 rounded-xl transition-all ${activeTab === "calendar" ? "text-blue-500 scale-105" : "text-gray-400"}`}><CalendarIcon className="w-5 h-5" /></button>
+      {/* 하단 네비게이션 (7탭 - 도감 추가) */}
+      <nav className="absolute bottom-0 left-0 right-0 h-20 bg-white border-t border-gray-100 flex items-center justify-around px-1 z-10 shadow-lg">
+        <button onClick={() => setActiveTab("chat")} className={`flex flex-col items-center justify-center w-9 h-9 rounded-xl transition-all ${activeTab === "chat" ? "text-blue-500 scale-105" : "text-gray-400"}`}><MessageSquare className="w-4 h-4" /></button>
+        <button onClick={() => setActiveTab("calendar")} className={`flex flex-col items-center justify-center w-9 h-9 rounded-xl transition-all ${activeTab === "calendar" ? "text-blue-500 scale-105" : "text-gray-400"}`}><CalendarIcon className="w-4 h-4" /></button>
         <button onClick={() => setActiveTab("room")} className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl -translate-y-4 transition-all shadow-md ${activeTab === "room" ? "bg-blue-500 text-white" : "bg-gray-50 text-gray-400"}`}><img src={CAT_CHARACTERS[catMood].image} alt="Cat Icon" className="w-9 h-9 object-contain" /></button>
-        <button onClick={() => setActiveTab("community")} className={`flex flex-col items-center justify-center w-10 h-10 rounded-xl transition-all ${activeTab === "community" ? "text-blue-500 scale-105" : "text-gray-400"}`}><Users className="w-5 h-5" /></button>
-        <button onClick={() => setActiveTab("report")} className={`flex flex-col items-center justify-center w-10 h-10 rounded-xl transition-all ${activeTab === "report" ? "text-blue-500 scale-105" : "text-gray-400"}`}><BarChart2 className="w-5 h-5" /></button>
-        <button onClick={() => setActiveTab("admin")} className={`flex flex-col items-center justify-center w-10 h-10 rounded-xl transition-all ${activeTab === "admin" ? "text-blue-500 scale-105" : "text-gray-400"}`}><Shield className="w-5 h-5" /></button>
+        <button onClick={() => setActiveTab("community")} className={`flex flex-col items-center justify-center w-9 h-9 rounded-xl transition-all ${activeTab === "community" ? "text-blue-500 scale-105" : "text-gray-400"}`}><Users className="w-4 h-4" /></button>
+        <button
+          onClick={() => setActiveTab("dex")}
+          className={`flex flex-col items-center justify-center w-9 h-9 rounded-xl transition-all relative ${activeTab === "dex" ? "text-blue-500 scale-105" : "text-gray-400"}`}
+        >
+          <BookOpen className="w-4 h-4" />
+          {/* 수집 개수 배지 */}
+          <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-[7px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center">
+            {collectedCats.length}
+          </span>
+        </button>
+        <button onClick={() => setActiveTab("report")} className={`flex flex-col items-center justify-center w-9 h-9 rounded-xl transition-all ${activeTab === "report" ? "text-blue-500 scale-105" : "text-gray-400"}`}><BarChart2 className="w-4 h-4" /></button>
+        <button onClick={() => setActiveTab("admin")} className={`flex flex-col items-center justify-center w-9 h-9 rounded-xl transition-all ${activeTab === "admin" ? "text-blue-500 scale-105" : "text-gray-400"}`}><Shield className="w-4 h-4" /></button>
       </nav>
 
       {/* MODAL: Stripe 결제 상점 */}

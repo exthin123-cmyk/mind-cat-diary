@@ -21,7 +21,15 @@ export interface CatCharacter {
   name: string;
   image: string;
   description: string;
-  color: string; // 방 배경 등에 쓸 파스텔 톤
+  color: string;
+  // 도감 전용 필드
+  dexNo: number;
+  rarity: "common" | "uncommon" | "rare" | "legendary";
+  rarityLabel: string;
+  emoji: string;
+  unlockCondition: string;
+  specialty: string;
+  quote: string;
 }
 
 export const CAT_CHARACTERS: Record<MoodType, CatCharacter> = {
@@ -30,116 +38,228 @@ export const CAT_CHARACTERS: Record<MoodType, CatCharacter> = {
     name: "억울냥 (Unfair Cat)",
     image: "/manus-storage/unfair_cat_bb093496.png",
     description: "새파란 사과를 소중하게 꼭 쥐고 있는, 별빛 눈망울의 검은 고양이냥!",
-    color: "bg-[#E0F2FE]" // 스카이블루
+    color: "bg-[#E0F2FE]",
+    dexNo: 1,
+    rarity: "common",
+    rarityLabel: "일반",
+    emoji: "🍎",
+    unlockCondition: "심리테스트에서 억울냥 결과를 받으면 해금된다냥!",
+    specialty: "억울한 감정을 가장 깊이 공감하는 능력",
+    quote: "내가 잘못한 게 아닌데... 그래도 괜찮다냥. 내가 알아주겠다냥 🐾"
   },
   anxious: {
     type: "anxious",
     name: "불안냥 (Anxious Cat)",
     image: "/manus-storage/anxious_cat_242b50dc.png",
     description: "종이 상자 안에 쏙 들어가서 조심스럽게 주변을 살피는 귀여운 겁쟁이 고양이냥...",
-    color: "bg-[#FCE7F3]" // 핑크
+    color: "bg-[#FCE7F3]",
+    dexNo: 2,
+    rarity: "common",
+    rarityLabel: "일반",
+    emoji: "📦",
+    unlockCondition: "심리테스트에서 불안냥 결과를 받으면 해금된다냥!",
+    specialty: "불안한 마음을 안정시켜주는 4-4-4 호흡법 전수",
+    quote: "상자 안이 제일 안전하다냥. 하지만 밖으로 나가는 용기도 소중하다냥 💙"
   },
   lonely: {
     type: "lonely",
     name: "외롭냥 (Lonely Cat)",
     image: "/manus-storage/lonely_cat_dbdd7a45.png",
     description: "조그만 하얀 곰 인형을 꼭 껴안고 외로움을 달래는 아기 고양이냥.",
-    color: "bg-[#E0F2FE]" // 스카이블루
+    color: "bg-[#E0F2FE]",
+    dexNo: 3,
+    rarity: "common",
+    rarityLabel: "일반",
+    emoji: "🧸",
+    unlockCondition: "심리테스트에서 외롭냥 결과를 받으면 해금된다냥!",
+    specialty: "외로운 마음을 따뜻하게 안아주는 공감 능력",
+    quote: "혼자라도 괜찮다냥. 내가 항상 곁에 있어줄 거다냥 🤍"
   },
   lethargic: {
     type: "lethargic",
     name: "무기력냥 (Lethargic Cat)",
     image: "/manus-storage/lethargic_cat_3adb62ca.png",
     description: "귀여운 밤하늘 고깔모자를 쓰고 베개를 꼭 껴안은 채 쿨쿨 잠든 고양이냥.",
-    color: "bg-[#FCE7F3]" // 핑크
+    color: "bg-[#FCE7F3]",
+    dexNo: 4,
+    rarity: "common",
+    rarityLabel: "일반",
+    emoji: "💤",
+    unlockCondition: "심리테스트에서 무기력냥 결과를 받으면 해금된다냥!",
+    specialty: "완벽한 휴식의 기술을 전수하는 수면 마스터",
+    quote: "아무것도 안 하는 것도 용기다냥. 오늘은 그냥 쉬어도 된다냥 😴"
   },
   angry: {
     type: "angry",
     name: "화남냥 (Angry Cat)",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663712963517/8RRVSLjawLcuSnjpxSgnMb/angry_cat-m8qAdYjoovLNSSnR5P2dLZ.webp",
     description: "머리 위에 불꽃 스파크가 튀며 씩씩거리고 있는 카리스마 폭발 고양이냥!",
-    color: "bg-[#FCE7F3]" // 핑크
+    color: "bg-[#FEF2F2]",
+    dexNo: 5,
+    rarity: "uncommon",
+    rarityLabel: "희귀",
+    emoji: "🔥",
+    unlockCondition: "심리테스트에서 화남냥 결과를 받거나, 일기에 분노 감정을 3번 이상 기록하면 해금된다냥!",
+    specialty: "화난 감정을 건강하게 표현하는 방법 코치",
+    quote: "화가 나는 건 당연하다냥. 그 에너지를 올바른 방향으로 쓰면 된다냥 🔥"
   },
   love: {
     type: "love",
     name: "사랑냥 (Love Cat)",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663712963517/8RRVSLjawLcuSnjpxSgnMb/love_cat-dsgEtsZE45sy9mMnCAYtf4.webp",
     description: "눈에 하트가 뿅뿅 박힌 채 온 세상에 핑크빛 사랑을 전파하는 사랑스러운 고양이냥.",
-    color: "bg-[#FCE7F3]" // 핑크
+    color: "bg-[#FDF2F8]",
+    dexNo: 6,
+    rarity: "rare",
+    rarityLabel: "레어",
+    emoji: "💖",
+    unlockCondition: "심리테스트에서 사랑냥 결과를 받거나, 커뮤니티에서 하트를 10개 이상 받으면 해금된다냥!",
+    specialty: "사랑과 긍정 에너지를 전파하는 힐링 마스터",
+    quote: "세상 모든 것을 사랑하면 세상도 나를 사랑해준다냥 💖"
   },
   shy: {
     type: "shy",
     name: "부끄냥 (Shy Cat)",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663712963517/8RRVSLjawLcuSnjpxSgnMb/shy_cat-TLgWwwHwgWk8QtKSniYTvF.webp",
     description: "두 손으로 얼굴을 가린 채 수줍게 볼을 붉히고 있는 수줍음 많은 아기 고양이냥.",
-    color: "bg-[#E0F2FE]" // 스카이블루
+    color: "bg-[#FFF7ED]",
+    dexNo: 7,
+    rarity: "uncommon",
+    rarityLabel: "희귀",
+    emoji: "🌸",
+    unlockCondition: "심리테스트에서 부끄냥 결과를 받거나, 커뮤니티에 첫 글을 작성하면 해금된다냥!",
+    specialty: "수줍음을 귀여움으로 승화시키는 특별한 재능",
+    quote: "부끄러운 건 나쁜 게 아니다냥. 그게 바로 나의 매력이다냥 🌸"
   },
   shocked: {
     type: "shocked",
     name: "놀람냥 (Shocked Cat)",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663712963517/8RRVSLjawLcuSnjpxSgnMb/shocked_cat-PCbH688vJKsoUdWpkFYcyC.webp",
     description: "눈과 입이 똥그랗게 커져서 느낌표를 띄우며 깜짝 놀란 엉뚱한 고양이냥!",
-    color: "bg-[#E0F2FE]" // 스카이블루
+    color: "bg-[#F0F9FF]",
+    dexNo: 8,
+    rarity: "uncommon",
+    rarityLabel: "희귀",
+    emoji: "❗",
+    unlockCondition: "심리테스트에서 놀람냥 결과를 받거나, 레벨 3 이상이 되면 해금된다냥!",
+    specialty: "세상의 모든 놀라운 것들을 발견하는 탐험 능력",
+    quote: "세상은 항상 놀라운 일로 가득하다냥! 그게 바로 삶의 재미다냥 ❗"
   },
   bored: {
     type: "bored",
     name: "지루냥 (Bored Cat)",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663712963517/8RRVSLjawLcuSnjpxSgnMb/bored_cat-5Wr3ovL2SF8sUmm6VV4oHa.webp",
     description: "턱을 괴고 한숨을 푹 쉬며 만사가 다 귀찮고 심심한 시크 고양이냥.",
-    color: "bg-[#F1F5F9]" // 화이트/그레이
+    color: "bg-[#F8FAFC]",
+    dexNo: 9,
+    rarity: "common",
+    rarityLabel: "일반",
+    emoji: "😑",
+    unlockCondition: "심리테스트에서 지루냥 결과를 받거나, 일기를 5일 연속으로 작성하면 해금된다냥!",
+    specialty: "지루함 속에서 새로운 취미를 찾아내는 능력",
+    quote: "지루하다는 건 새로운 자극을 원한다는 신호다냥. 뭔가 새로운 걸 해보라냥 😑"
   },
   depressed: {
     type: "depressed",
     name: "우울냥 (Depressed Cat)",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663712963517/8RRVSLjawLcuSnjpxSgnMb/depressed_cat-WA8hcNwRfsLrtTQLSEYBtQ.webp",
     description: "머리 위에 먹구름 비가 내리며 잔뜩 풀이 죽어있는, 위로가 꼭 필요한 고양이냥...",
-    color: "bg-[#E0F2FE]" // 스카이블루
+    color: "bg-[#EFF6FF]",
+    dexNo: 10,
+    rarity: "rare",
+    rarityLabel: "레어",
+    emoji: "🌧️",
+    unlockCondition: "심리테스트에서 우울냥 결과를 받거나, 냥이와 대화를 10번 이상 하면 해금된다냥!",
+    specialty: "비 오는 날의 따뜻한 위로와 공감 능력",
+    quote: "비가 온 뒤에 땅이 굳는 것처럼, 이 슬픔도 나를 더 단단하게 만든다냥 🌧️"
   },
   excited: {
     type: "excited",
     name: "신남냥 (Excited Cat)",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663712963517/8RRVSLjawLcuSnjpxSgnMb/love_cat-dsgEtsZE45sy9mMnCAYtf4.webp",
     description: "온몸으로 에너지를 발산하며 너무 신나서 꼬리를 붕붕 흔드는 고양이냥!",
-    color: "bg-[#FCE7F3]" // 핑크
+    color: "bg-[#FFFBEB]",
+    dexNo: 11,
+    rarity: "uncommon",
+    rarityLabel: "희귀",
+    emoji: "⚡",
+    unlockCondition: "심리테스트에서 신남냥 결과를 받거나, 레벨 5 이상이 되면 해금된다냥!",
+    specialty: "신나는 에너지로 주변 모두를 활기차게 만드는 능력",
+    quote: "오늘 하루도 최고다냥! 이 에너지로 뭐든 다 할 수 있다냥 ⚡"
   },
   scared: {
     type: "scared",
     name: "겁먹냥 (Scared Cat)",
     image: "/manus-storage/anxious_cat_242b50dc.png",
     description: "어두운 방구석에서 꼬리를 바짝 내린 채 무서워하고 있는 겁쟁이 고양이냥.",
-    color: "bg-[#E0F2FE]" // 스카이블루
+    color: "bg-[#F0FDF4]",
+    dexNo: 12,
+    rarity: "uncommon",
+    rarityLabel: "희귀",
+    emoji: "👻",
+    unlockCondition: "심리테스트에서 겁먹냥 결과를 받거나, 심리테스트를 3번 이상 완료하면 해금된다냥!",
+    specialty: "두려움을 용기로 바꾸는 마음의 연금술",
+    quote: "무서운 건 당연하다냥. 그래도 한 발짝 내딛는 것이 용기다냥 👻"
   },
   proud: {
     type: "proud",
     name: "뿌듯냥 (Proud Cat)",
     image: "/manus-storage/unfair_cat_bb093496.png",
     description: "자신이 해낸 일을 자랑스러워하며 가슴을 쫙 펴고 당당하게 서 있는 고양이냥!",
-    color: "bg-[#FCE7F3]" // 핑크
+    color: "bg-[#FFF7ED]",
+    dexNo: 13,
+    rarity: "rare",
+    rarityLabel: "레어",
+    emoji: "🏆",
+    unlockCondition: "심리테스트에서 뿌듯냥 결과를 받거나, 레벨 7 이상이 되면 해금된다냥!",
+    specialty: "성취감을 극대화하고 자존감을 높여주는 응원 능력",
+    quote: "오늘 해낸 일이 아무리 작아도 그건 분명 대단한 일이다냥 🏆"
   },
   curious: {
     type: "curious",
     name: "궁금냥 (Curious Cat)",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663712963517/8RRVSLjawLcuSnjpxSgnMb/shocked_cat-PCbH688vJKsoUdWpkFYcyC.webp",
     description: "눈을 반짝이며 드림님의 모든 일상과 비밀을 다 궁금해하는 호기심 천국 고양이냥.",
-    color: "bg-[#E0F2FE]" // 스카이블루
+    color: "bg-[#EFF6FF]",
+    dexNo: 14,
+    rarity: "uncommon",
+    rarityLabel: "희귀",
+    emoji: "🔍",
+    unlockCondition: "심리테스트에서 궁금냥 결과를 받거나, 커뮤니티에 댓글을 5개 이상 달면 해금된다냥!",
+    specialty: "모든 것에 호기심을 갖고 탐구하는 지식 탐험가",
+    quote: "모르는 게 있다는 건 배울 게 있다는 뜻이다냥. 항상 궁금해하라냥 🔍"
   },
   guilty: {
     type: "guilty",
     name: "미안냥 (Guilty Cat)",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663712963517/8RRVSLjawLcuSnjpxSgnMb/shy_cat-TLgWwwHwgWk8QtKSniYTvF.webp",
     description: "잘못한 일이 있어 고개를 푹 숙인 채 꼬리를 살랑이며 미안해하는 고양이냥.",
-    color: "bg-[#FCE7F3]" // 핑크
+    color: "bg-[#FDF4FF]",
+    dexNo: 15,
+    rarity: "uncommon",
+    rarityLabel: "희귀",
+    emoji: "🙏",
+    unlockCondition: "심리테스트에서 미안냥 결과를 받거나, 일기에 감사 내용을 10번 이상 기록하면 해금된다냥!",
+    specialty: "진심 어린 사과와 화해를 이끌어내는 공감 능력",
+    quote: "미안하다고 말하는 용기가 관계를 더 깊게 만든다냥 🙏"
   },
   relaxed: {
     type: "relaxed",
     name: "편안냥 (Relaxed Cat)",
     image: "/manus-storage/lethargic_cat_3adb62ca.png",
     description: "따뜻한 벽난로 앞 러그에 누워 뒹굴거리며 완벽한 평온을 즐기는 고양이냥.",
-    color: "bg-[#E0F2FE]" // 스카이블루
+    color: "bg-[#F0FDF4]",
+    dexNo: 16,
+    rarity: "legendary",
+    rarityLabel: "전설",
+    emoji: "🌿",
+    unlockCondition: "심리테스트에서 편안냥 결과를 받거나, 모든 냥이를 1마리 이상 수집하면 해금된다냥!",
+    specialty: "마음의 평화를 전파하는 궁극의 힐링 마스터",
+    quote: "지금 이 순간, 이대로도 충분히 완벽하다냥. 그냥 있어도 된다냥 🌿"
   }
 };
 
-// 무작위 심리테스트를 위한 20개 질문 은행 (Question Bank)
+// 무작위 심리테스트를 위한 15개 질문 은행 (Question Bank)
 export interface TestQuestion {
   id: number;
   text: string;
@@ -323,12 +443,12 @@ export const SHOP_ITEMS: ShopItem[] = [
 
 export interface ScheduleEvent {
   id: string;
-  date: string; // YYYY-MM-DD
-  title: string; // 일정 제목
-  mood: string; // 감정 요약
-  thanks: string; // 감사 일기 내용
-  customSolution?: string; // 실시간 분석 맞춤 솔루션
-  customMusicRecommendation?: string; // 실시간 추천 음악 명
+  date: string;
+  title: string;
+  mood: string;
+  thanks: string;
+  customSolution?: string;
+  customMusicRecommendation?: string;
 }
 
 export interface Message {
@@ -348,10 +468,9 @@ export interface FeedPost {
   likedByMe: boolean;
   comments: { id: string; author: string; text: string; date: string }[];
   date: string;
-  hasBestBadge?: boolean; // 상담왕 배지 여부
+  hasBestBadge?: boolean;
 }
 
-// 회원 정보 인터페이스
 export interface UserAccount {
   id: string;
   username: string;
