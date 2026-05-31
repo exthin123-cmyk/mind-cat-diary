@@ -78,6 +78,32 @@ export default function Home() {
   const [isLevelUpGlowing, setIsLevelUpGlowing] = useState(false);
   const [isLevelUpModalOpen, setIsLevelUpModalOpen] = useState(false);
 
+  // --- 일일 미션 시스템 ---
+  const [dailyMissions, setDailyMissions] = useState([
+    { id: "m1", icon: "💬", title: "냥이와 대화하기",    desc: "오늘 냥이에게 메시지를 1개 이상 보내기",  reward: 2, done: false },
+    { id: "m2", icon: "📖", title: "마음 일기 쓰기",     desc: "오늘의 감정과 감사 일기를 한 편 작성하기",  reward: 3, done: false },
+    { id: "m3", icon: "🌳", title: "커뮤니티 소통하기", desc: "마음 숲 피드에 댓글을 1개 이상 달기",       reward: 1, done: false },
+    { id: "m4", icon: "🐾", title: "냥이 쓰다듬기",     desc: "고양이 방에서 냥이를 터치하기",             reward: 1, done: false },
+    { id: "m5", icon: "🏠", title: "방 꾸미기",          desc: "소품 상점에서 아이템을 방에 배치하기",      reward: 2, done: false },
+  ]);
+  const [isMissionOpen, setIsMissionOpen] = useState(false);
+
+  // 미션 완료 처리 함수
+  const completeMission = (missionId: string) => {
+    setDailyMissions(prev => prev.map(m => {
+      if (m.id === missionId && !m.done) {
+        setApples(a => {
+          const newVal = a + m.reward;
+          toast.success(`미션 완료! 사과 🍎 ${m.reward}개를 획득했다냥!`);
+          return newVal;
+        });
+        gainExp(10, `미션: ${m.title}`);
+        return { ...m, done: true };
+      }
+      return m;
+    }));
+  };
+
   // --- 꾸미기 ---
   const [myItems, setMyItems] = useState<string[]>(["f3"]);
   const [equippedItems, setEquippedItems] = useState<string[]>(["f3"]);
@@ -358,6 +384,7 @@ export default function Home() {
         if (item.category === "wallpaper") { setEquippedItems(prev => [...prev.filter(id => SHOP_ITEMS.find(si => si.id === id)?.category !== "wallpaper"), item.id]); setCurrentWallpaper(item.id); }
         else setEquippedItems(prev => [...prev, item.id]);
         toast.success(`${item.name}을(를) 방에 장착했다냥! 🛋️`);
+        completeMission("m5"); // 방 꾸미기 미션 자동 완료
       }
     } else {
       if (apples < item.price) { toast.error("사과가 부족하다냥! 상점에서 사과를 충전하거나 레벨업 보상을 받아오라냥 🍎"); return; }
@@ -622,7 +649,7 @@ export default function Home() {
                 })}
               </div>
 
-              <div className="relative z-10 flex flex-col items-center cursor-pointer group" onClick={() => { setBubbleText(`나를 터치해줘서 고맙다냥! [${CAT_CHARACTERS[catMood].name}]인 나는 언제나 드림님 편이다냥! 💕`); gainExp(5, "고양이 교감"); }}>
+              <div className="relative z-10 flex flex-col items-center cursor-pointer group" onClick={() => { setBubbleText(`나를 터치해줘서 고맙다냥! [${CAT_CHARACTERS[catMood].name}]인 나는 언제나 드림님 편이다냥! 💕`); gainExp(5, "고양이 교감"); completeMission("m4"); }}>
                 <div className="bg-gray-800 text-white text-[10px] font-bold px-3 py-0.5 rounded-full whitespace-nowrap border border-gray-700 shadow-sm mb-2 z-20">
                   {catName} ({CAT_CHARACTERS[catMood].name.split(" ")[0]})
                 </div>
@@ -631,9 +658,77 @@ export default function Home() {
               </div>
             </div>
 
+            {/* 일일 미션 패널 */}
+            <div className="space-y-2">
+              <button
+                onClick={() => setIsMissionOpen(prev => !prev)}
+                className="w-full flex items-center justify-between px-4 py-2.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-2xl transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">🍎</span>
+                  <span className="text-xs font-black text-amber-700">일일 미션</span>
+                  <span className="text-[9px] bg-amber-500 text-white px-1.5 py-0.5 rounded-full font-bold">
+                    {dailyMissions.filter(m => m.done).length}/{dailyMissions.length} 완료
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 text-[10px] font-bold text-amber-600">
+                  총 {dailyMissions.filter(m => !m.done).reduce((s, m) => s + m.reward, 0)}개 구입 가능
+                  <span className={`transition-transform ${isMissionOpen ? "rotate-180" : ""}`}>▼</span>
+                </div>
+              </button>
+
+              {isMissionOpen && (
+                <div className="space-y-2 animate-in slide-in-from-top-2 duration-150">
+                  {dailyMissions.map(mission => (
+                    <div
+                      key={mission.id}
+                      className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                        mission.done
+                          ? "bg-gray-50 border-gray-100 opacity-60"
+                          : "bg-white border-gray-200 shadow-sm"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-lg">{mission.icon}</span>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className={`text-xs font-black ${ mission.done ? "text-gray-400 line-through" : "text-gray-700" }`}>
+                              {mission.title}
+                            </span>
+                            <span className="text-[9px] bg-amber-100 text-amber-600 px-1.5 py-0.2 rounded font-bold">
+                              🍎 +{mission.reward}
+                            </span>
+                          </div>
+                          <p className="text-[9px] text-gray-400 font-bold mt-0.5">{mission.desc}</p>
+                        </div>
+                      </div>
+                      {mission.done ? (
+                        <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                          <span className="text-green-500 text-xs">✓</span>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            if (mission.id === "m1") { setActiveTab("chat"); setIsMissionOpen(false); }
+                            else if (mission.id === "m2") { setIsAddEventOpen(true); setIsMissionOpen(false); }
+                            else if (mission.id === "m3") { setActiveTab("community"); setIsMissionOpen(false); }
+                            else if (mission.id === "m4") { setIsMissionOpen(false); }
+                            else if (mission.id === "m5") { setIsShopOpen(true); setIsMissionOpen(false); }
+                          }}
+                          className="px-2.5 py-1 bg-blue-500 hover:bg-blue-600 text-white text-[9px] font-bold rounded-lg transition-colors shrink-0"
+                        >
+                          바로가기
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="flex gap-3 justify-center">
               <button onClick={() => setIsShopOpen(true)} className="flex items-center gap-1.5 px-5 py-3 bg-gray-800 text-white font-bold text-xs rounded-xl shadow-sm hover:bg-gray-700 transition-colors"><ShoppingBag className="w-4 h-4" /> 소품 상점</button>
-              <button onClick={() => { setActiveTab("chat"); setBubbleText("무슨 재밌는 얘기를 들려줄 거냐냥? 🐾"); }} className="flex items-center gap-1.5 px-5 py-3 bg-blue-500 text-white font-bold text-xs rounded-xl shadow-sm hover:bg-blue-600 transition-colors"><MessageSquare className="w-4 h-4" /> 냥이와 대화하기</button>
+              <button onClick={() => { setActiveTab("chat"); setBubbleText("무슨 재밋는 이야기를 들려줄 거냥? 🐾"); }} className="flex items-center gap-1.5 px-5 py-3 bg-blue-500 text-white font-bold text-xs rounded-xl shadow-sm hover:bg-blue-600 transition-colors"><MessageSquare className="w-4 h-4" /> 냥이와 대화하기</button>
             </div>
           </div>
         )}
