@@ -1062,7 +1062,7 @@ export default function Home() {
         <button onClick={() => setActiveTab("community")} className={`flex flex-col items-center justify-center w-9 h-9 rounded-xl transition-all ${activeTab === "community" ? "text-blue-500 scale-105" : "text-gray-400"}`}><Users className="w-4 h-4" /></button>
         <button
           onClick={() => setActiveTab("dex")}
-          className={`flex flex-col items-center justify-center w-9 h-9 rounded-xl transition-all relative ${activeTab === "dex" ? "text-blue-500 scale-105" : "text-gray-400"}`}
+          className={`flex flex-col items-center justify-center w-9 h-9 rounded-xl transition-all relative ${activeTab === "dex" ? "text-blue-500 scale-105" : "text-gray-400"}`} style={{marginLeft: '47px'}}
         >
           <BookOpen className="w-4 h-4" />
           {/* 수집 개수 배지 */}
