@@ -78,6 +78,55 @@ export default function Home() {
   const [isLevelUpGlowing, setIsLevelUpGlowing] = useState(false);
   const [isLevelUpModalOpen, setIsLevelUpModalOpen] = useState(false);
 
+  // --- 온보딩 튜토리얼 ---
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(0);
+
+  const ONBOARDING_STEPS = [
+    {
+      emoji: "🐾",
+      title: "Mind Cat Diary에 오신 걸 환영한다냥!",
+      desc: "감정냥이와 함께 매일 마음을 기록하고, 힐링하고, 성장하는 나만의 감정 다이어리 앱이다냥. 먼저 심리테스트로 나만의 감정냥이를 만나보라냥!",
+      highlight: null
+    },
+    {
+      emoji: "💬",
+      title: "대화 — 냥이와 속마음 털어놓기",
+      desc: "AI 감정냥이가 드림님의 이야기를 진심으로 들어주고 공감해준다냥. 기쁜 일, 슬픈 일, 억울한 일 뭐든 다 말해달라냥!",
+      highlight: "대화"
+    },
+    {
+      emoji: "📅",
+      title: "달력 — 감정 일기 & 일정 기록",
+      desc: "매일 감정과 감사한 일을 일기로 기록하면 AI가 맞춤 솔루션과 힐링 Lofi 음악을 추천해준다냥. 일기를 쓸수록 사과도 쌓인다냥!",
+      highlight: "달력"
+    },
+    {
+      emoji: "🌳",
+      title: "커뮤니티 — 마음 숲 피드",
+      desc: "다른 집사들과 감정을 나누고 서로 위로해주는 따뜻한 커뮤니티냥. 하트와 댓글로 소통하고 '상담왕' 배지도 노려보라냥!",
+      highlight: "커뮤니티"
+    },
+    {
+      emoji: "📖",
+      title: "도감 — 감정냥이 수집하기",
+      desc: "심리테스트를 할 때마다 새로운 감정냥이를 수집할 수 있다냥. 총 16마리의 냥이를 모두 모으면 특별한 보상이 기다린다냥!",
+      highlight: "도감"
+    },
+    {
+      emoji: "🍎",
+      title: "사과 & 미션 — 꾸미기 재료 모으기",
+      desc: "매일 미션을 완료하면 사과를 획득할 수 있다냥. 모은 사과로 소품 상점에서 고양이 방을 예쁘게 꾸며보라냥!",
+      highlight: null
+    },
+    {
+      emoji: "📊",
+      title: "리포트 — 나의 감정 변화 분석",
+      desc: "한 달간 쓴 일기를 AI가 분석해서 감정 분포 차트와 따뜻한 월간 리포트를 만들어준다냥. 로그인하면 데이터가 영구 저장된다냥!",
+      highlight: "리포트"
+    }
+  ];
+
   // --- 일일 미션 시스템 ---
   const [dailyMissions, setDailyMissions] = useState([
     { id: "m1", icon: "💬", title: "냥이와 대화하기",    desc: "오늘 냥이에게 메시지를 1개 이상 보내기",  reward: 2, done: false },
@@ -170,6 +219,16 @@ export default function Home() {
     const shuffled = [...QUESTION_BANK].sort(() => 0.5 - Math.random());
     setActiveQuestions(shuffled.slice(0, 10));
   }, []);
+
+  // 온보딩: 심리테스트 완료 후 첫 방문 시 자동 표시
+  useEffect(() => {
+    if (isTestCompleted && authView === "app") {
+      const seen = localStorage.getItem("mindcat-onboarding-seen");
+      if (!seen) {
+        setTimeout(() => setIsOnboardingOpen(true), 600);
+      }
+    }
+  }, [isTestCompleted, authView]);
 
   useEffect(() => {
     const msgs = [
@@ -1263,6 +1322,112 @@ export default function Home() {
                 className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-xl transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 🍎 10개 사용하고 재도전!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: 온보딩 튜토리얼 */}
+      {isOnboardingOpen && (
+        <div className="absolute inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+          <div className="w-full max-w-[340px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-200">
+            
+            {/* 헤더 진행 바 */}
+            <div className="px-5 pt-5 pb-3">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-1.5">
+                  {ONBOARDING_STEPS.map((_, idx) => (
+                    <div
+                      key={idx}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                        idx === onboardingStep
+                          ? "w-6 bg-blue-500"
+                          : idx < onboardingStep
+                          ? "w-3 bg-blue-200"
+                          : "w-3 bg-gray-200"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-[10px] font-bold text-gray-400">
+                  {onboardingStep + 1}/{ONBOARDING_STEPS.length}
+                </span>
+              </div>
+            </div>
+
+            {/* 콘텐츠 영역 */}
+            <div className="px-5 pb-5 space-y-4">
+              {/* 이모지 및 제목 */}
+              <div className="text-center space-y-2">
+                <div className="text-5xl">{ONBOARDING_STEPS[onboardingStep].emoji}</div>
+                <h3 className="text-base font-black text-gray-800 leading-snug">
+                  {ONBOARDING_STEPS[onboardingStep].title}
+                </h3>
+              </div>
+
+              {/* 설명 텍스트 */}
+              <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
+                <p className="text-xs font-bold text-gray-600 leading-relaxed text-center">
+                  {ONBOARDING_STEPS[onboardingStep].desc}
+                </p>
+              </div>
+
+              {/* 하단 네비게이션 강조 표시 (해당 단계에만) */}
+              {ONBOARDING_STEPS[onboardingStep].highlight && (
+                <div className="flex items-center justify-center gap-2 p-2.5 bg-blue-50 rounded-xl border border-blue-100">
+                  <span className="text-[10px] font-bold text-blue-600">
+                    하단 네비게이션에서
+                  </span>
+                  <span className="bg-blue-500 text-white text-[10px] font-black px-2.5 py-1 rounded-full">
+                    {ONBOARDING_STEPS[onboardingStep].highlight}
+                  </span>
+                  <span className="text-[10px] font-bold text-blue-600">를 눌러보라냥!</span>
+                </div>
+              )}
+
+              {/* 버튼 그룹 */}
+              <div className="flex gap-2 pt-1">
+                {onboardingStep > 0 && (
+                  <button
+                    onClick={() => setOnboardingStep(prev => prev - 1)}
+                    className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold text-xs rounded-xl transition-colors"
+                  >
+                    ← 이전
+                  </button>
+                )}
+                {onboardingStep < ONBOARDING_STEPS.length - 1 ? (
+                  <button
+                    onClick={() => setOnboardingStep(prev => prev + 1)}
+                    className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-xl transition-colors shadow-sm"
+                  >
+                    다음 →
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      localStorage.setItem("mindcat-onboarding-seen", "true");
+                      setIsOnboardingOpen(false);
+                      setOnboardingStep(0);
+                      toast.success("튜토리얼 완료! 이제 나만의 감정냥이를 만나보라냥 🐾");
+                    }}
+                    className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-xl transition-colors shadow-sm"
+                  >
+                    시작하기냥! 🐾
+                  </button>
+                )}
+              </div>
+
+              {/* 다시 보지 않기 */}
+              <button
+                onClick={() => {
+                  localStorage.setItem("mindcat-onboarding-seen", "true");
+                  setIsOnboardingOpen(false);
+                  setOnboardingStep(0);
+                }}
+                className="w-full text-center text-[10px] text-gray-400 hover:text-gray-600 font-bold transition-colors"
+              >
+                건너뛰기 (다시 보지 않음)
               </button>
             </div>
           </div>
