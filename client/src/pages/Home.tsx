@@ -702,14 +702,14 @@ export default function Home() {
           <div className="p-5 space-y-5 h-full flex flex-col justify-between min-h-[460px]">
             <div className="w-full flex justify-center">
               <div className="relative w-full max-w-[320px]">
-                <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-3.5 text-center font-bold text-xs text-blue-600 leading-relaxed relative shadow-sm">
+                <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-3.5 text-center font-bold text-xs text-blue-600 leading-relaxed relative shadow-sm" style={{opacity: '0'}}>
                   📢 {catName}의 오늘 안부: {dailyCatMessage}
                   <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-50/50 border-r border-b border-blue-100 rotate-45"></div>
                 </div>
               </div>
             </div>
 
-            <div className={`flex-1 min-h-[280px] max-h-[340px] rounded-3xl relative overflow-hidden flex flex-col items-center justify-center p-6 shadow-inner ${getRoomBg()}`}>
+            <div className={`flex-1 min-h-[280px] max-h-[340px] rounded-3xl relative overflow-hidden flex flex-col items-center justify-center p-6 shadow-inner ${getRoomBg()}`} style={{marginBottom: '26px', marginTop: '-39px', paddingRight: '26px'}}>
               <div className="absolute inset-0 pointer-events-none">
                 {equippedItems.map(itemId => {
                   const item = SHOP_ITEMS.find(si => si.id === itemId);
