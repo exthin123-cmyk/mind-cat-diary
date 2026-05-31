@@ -56,6 +56,8 @@ export default function Home() {
   const [isTestCompleted, setIsTestCompleted] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [activeQuestions, setActiveQuestions] = useState<typeof QUESTION_BANK>([]);
+  const [testCount, setTestCount] = useState(0); // 심리테스트 진행 횟수
+  const [isTestPayConfirmOpen, setIsTestPayConfirmOpen] = useState(false); // 사과 차감 확인 모달
   const [testScores, setTestScores] = useState<Record<MoodType, number>>({
     unfair: 0, anxious: 0, lonely: 0, lethargic: 0, angry: 0, love: 0, shy: 0, shocked: 0, bored: 0, depressed: 0,
     excited: 0, scared: 0, proud: 0, curious: 0, guilty: 0, relaxed: 0
@@ -379,6 +381,21 @@ export default function Home() {
 
   // 커뮤니티
   const handleLikePost = (postId: string) => setFeedPosts(prev => prev.map(post => post.id === postId ? { ...post, likes: post.likedByMe ? post.likes - 1 : post.likes + 1, likedByMe: !post.likedByMe } : post));
+
+  // 코멘트 삭제 함수
+  const handleDeleteComment = (postId: string, commentId: string) => {
+    setFeedPosts(prev => prev.map(post => {
+      if (post.id !== postId) return post;
+      return { ...post, comments: post.comments.filter(c => c.id !== commentId) };
+    }));
+    toast.success("댓글을 삭제했다냥.");
+  };
+
+  // 피드 게시물 삭제 함수
+  const handleDeletePost = (postId: string) => {
+    setFeedPosts(prev => prev.filter(post => post.id !== postId));
+    toast.success("게시물을 삭제했다냥.");
+  };
   const handleAddComment = (postId: string, text: string) => {
     if (!text.trim()) return;
     setFeedPosts(prev => prev.map(post => post.id === postId ? { ...post, comments: [...post.comments, { id: Date.now().toString(), author: userName, text: `${text}냥!`, date: "방금 전" }] } : post));
@@ -751,8 +768,25 @@ export default function Home() {
                     <div className="flex items-center gap-1 text-xs font-bold text-gray-500"><MessageCircle className="w-3.5 h-3.5" /><span>{post.comments.length}</span></div>
                   </div>
                   {post.comments.length > 0 && (
-                    <div className="p-4 bg-gray-50/30 space-y-2 border-b border-gray-50">
-                      {post.comments.map(comment => (<div key={comment.id} className="text-xs font-bold flex items-start gap-1.5"><span className="text-gray-800 font-black shrink-0">{comment.author}:</span><span className="text-gray-600 leading-relaxed">{comment.text}</span></div>))}
+                    <div className="p-4 bg-gray-50/30 space-y-2.5 border-b border-gray-50">
+                      {post.comments.map(comment => (
+                        <div key={comment.id} className="flex items-start justify-between gap-2 group">
+                          <div className="flex items-start gap-1.5 flex-1 min-w-0">
+                            <span className="text-gray-800 font-black text-xs shrink-0">{comment.author}:</span>
+                            <span className="text-gray-600 text-xs font-bold leading-relaxed break-words">{comment.text}</span>
+                          </div>
+                          {/* 내가 쒴 댓글이면 삭제 버튼 표시 */}
+                          {comment.author === userName && (
+                            <button
+                              onClick={() => handleDeleteComment(post.id, comment.id)}
+                              className="shrink-0 p-1 rounded-md text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
+                              title="댓글 삭제"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
                   <div className="p-3 bg-white flex gap-2">
@@ -839,11 +873,28 @@ export default function Home() {
               collectedCats={collectedCats}
               currentCatMood={catMood}
               level={level}
+              testCount={testCount}
+              apples={apples}
               onSetCat={(mood) => {
                 setCatMood(mood);
                 setBubbleText(`[${CAT_CHARACTERS[mood].name}]로 변경했다냥! 반갑다냥! 💕`);
                 setActiveTab("room");
                 toast.success(`[${CAT_CHARACTERS[mood].name}]를 방에 배치했다냥! 🐾`);
+              }}
+              onRetakeTest={() => {
+                // 3회 이상이면 사과 10개 차감 확인 모달 표시
+                if (testCount >= 2) {
+                  setIsTestPayConfirmOpen(true);
+                } else {
+                  // 무료 재도전 (0~2회)
+                  setTestCount(prev => prev + 1);
+                  setIsTestCompleted(false);
+                  setCurrentQuestionIndex(0);
+                  setTestScores({ unfair: 0, anxious: 0, lonely: 0, lethargic: 0, angry: 0, love: 0, shy: 0, shocked: 0, bored: 0, depressed: 0, excited: 0, scared: 0, proud: 0, curious: 0, guilty: 0, relaxed: 0 });
+                  const shuffled = [...QUESTION_BANK].sort(() => 0.5 - Math.random());
+                  setActiveQuestions(shuffled.slice(0, 10));
+                  toast.success(`심리테스트 재도전 시작! (${testCount + 1}회차) 이번엔 어떤 냥이가 나올까냥? 🐾`);
+                }
               }}
             />
           </div>
@@ -1047,6 +1098,57 @@ export default function Home() {
             <p className="text-xs font-bold text-gray-600 leading-relaxed">드림님 축하한다냥! 드림이와 마음을 나눠 레벨이 올랐다냥!</p>
             <div className="bg-blue-50 text-blue-600 p-3 rounded-xl border border-blue-100 text-xs font-bold">보상: 사과 🍎 3개 획득!</div>
             <div className="text-[10px] text-gray-400 font-bold animate-pulse">[ 화면을 탭하면 방으로 돌아갑니다냥 ]</div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: 심리테스트 재도전 사과 10개 차감 확인 모달 */}
+      {isTestPayConfirmOpen && (
+        <div className="absolute inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-[320px] bg-white rounded-3xl p-6 text-center space-y-4 border border-gray-100 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="text-4xl">🍎🔒</div>
+            <h3 className="text-base font-black text-gray-800">심리테스트 재도전</h3>
+            <p className="text-xs font-bold text-gray-600 leading-relaxed">심리테스트는 무료로 2회까지 진행할 수 있다냥.<br />
+              3회부터는 매번 사과 <span className="text-blue-500 font-black">🍎 10개</span>를 사용해야 재도전할 수 있다냥.</p>
+            <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 space-y-1">
+              <div className="text-xs font-bold text-amber-700">현재 보유 사과: 🍎 {apples}개</div>
+              <div className="text-xs font-bold text-amber-600">차감 예정: 🍎 10개 사용</div>
+              <div className={`text-xs font-bold ${apples >= 10 ? "text-green-600" : "text-red-500"}`}>
+                {apples >= 10 ? `재도전 후 남은 사과: 🍎 ${apples - 10}개` : "⚠️ 사과가 부족하다냥! 상점에서 충전해달라냥."}
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setIsTestPayConfirmOpen(false)}
+                className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold text-xs rounded-xl transition-colors"
+              >
+                취소
+              </button>
+              <button
+                onClick={() => {
+                  if (apples < 10) {
+                    toast.error("사과가 부족하다냥! 상점에서 사과를 충전해달라냥 🍎");
+                    setIsTestPayConfirmOpen(false);
+                    setIsStoreOpen(true);
+                    return;
+                  }
+                  // 사과 10개 차감
+                  setApples(prev => prev - 10);
+                  setTestCount(prev => prev + 1);
+                  setIsTestPayConfirmOpen(false);
+                  setIsTestCompleted(false);
+                  setCurrentQuestionIndex(0);
+                  setTestScores({ unfair: 0, anxious: 0, lonely: 0, lethargic: 0, angry: 0, love: 0, shy: 0, shocked: 0, bored: 0, depressed: 0, excited: 0, scared: 0, proud: 0, curious: 0, guilty: 0, relaxed: 0 });
+                  const shuffled = [...QUESTION_BANK].sort(() => 0.5 - Math.random());
+                  setActiveQuestions(shuffled.slice(0, 10));
+                  toast.success(`사과 🍎 10개를 사용해 심리테스트 재도전 시작! (${testCount + 1}회차) 이번엔 어떤 냥이가 나올까냥? 🐾`);
+                }}
+                disabled={apples < 10}
+                className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-xl transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                🍎 10개 사용하고 재도전!
+              </button>
+            </div>
           </div>
         </div>
       )}

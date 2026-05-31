@@ -6,8 +6,11 @@ interface DexProps {
   collectedCats: MoodType[];       // 수집된 냥이 목록
   currentCatMood: MoodType;        // 현재 방에 있는 냥이
   level: number;                   // 현재 레벨
+  testCount: number;               // 심리테스트 진행 횟수
+  apples: number;                  // 현재 사과 개수
   onClose?: () => void;            // 닫기 콜백 (탭 전환용)
   onSetCat: (mood: MoodType) => void; // 방 냥이 변경 콜백
+  onRetakeTest: () => void;        // 심리테스트 재도전 콜백
 }
 
 const RARITY_COLORS: Record<string, { bg: string; text: string; border: string; badge: string }> = {
@@ -21,7 +24,7 @@ const RARITY_STARS: Record<string, number> = {
   common: 1, uncommon: 2, rare: 3, legendary: 4
 };
 
-export default function Dex({ collectedCats, currentCatMood, level, onSetCat }: DexProps) {
+export default function Dex({ collectedCats, currentCatMood, level, testCount, apples, onSetCat, onRetakeTest }: DexProps) {
   const [selectedCat, setSelectedCat] = useState<CatCharacter | null>(null);
   const [filterRarity, setFilterRarity] = useState<string>("all");
 
@@ -52,6 +55,13 @@ export default function Dex({ collectedCats, currentCatMood, level, onSetCat }: 
           <div className="text-right">
             <div className="text-lg font-black text-blue-500">{collectedCount}<span className="text-sm text-gray-400 font-bold">/{totalCount}</span></div>
             <div className="text-[9px] text-gray-400 font-bold">수집 완료</div>
+            {/* 심리테스트 재도전 버튼 */}
+            <button
+              onClick={onRetakeTest}
+              className="mt-1 px-2.5 py-1 bg-blue-500 hover:bg-blue-600 text-white text-[9px] font-bold rounded-full transition-colors shadow-sm flex items-center gap-1"
+            >
+              재도전 {testCount >= 2 ? "(편당 🍎 10개)" : `(${testCount + 1}/2회 무료)`}
+            </button>
           </div>
         </div>
 
