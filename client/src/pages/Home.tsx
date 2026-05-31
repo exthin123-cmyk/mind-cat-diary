@@ -1054,24 +1054,45 @@ export default function Home() {
         <a href={adLink} target="_blank" rel="noreferrer" className="text-[9px] text-blue-500 font-bold flex items-center gap-0.5 hover:underline shrink-0">바로가기 <ExternalLink className="w-2.5 h-2.5" /></a>
       </div>
 
-      {/* 하단 네비게이션 (7탭 - 도감 추가) */}
-      <nav className="absolute bottom-0 left-0 right-0 h-20 bg-white border-t border-gray-100 flex items-center justify-around px-1 z-10 shadow-lg">
-        <button onClick={() => setActiveTab("chat")} className={`flex flex-col items-center justify-center w-9 h-9 rounded-xl transition-all ${activeTab === "chat" ? "text-blue-500 scale-105" : "text-gray-400"}`}><MessageSquare className="w-4 h-4" /></button>
-        <button onClick={() => setActiveTab("calendar")} className={`flex flex-col items-center justify-center w-9 h-9 rounded-xl transition-all ${activeTab === "calendar" ? "text-blue-500 scale-105" : "text-gray-400"}`}><CalendarIcon className="w-4 h-4" /></button>
-        <button onClick={() => setActiveTab("room")} className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl -translate-y-4 transition-all shadow-md ${activeTab === "room" ? "bg-blue-500 text-white" : "bg-gray-50 text-gray-400"}`} style={{marginBottom: '-29px', marginLeft: '-3px', marginRight: '-182px'}}><img src={CAT_CHARACTERS[catMood].image} alt="Cat Icon" className="w-9 h-9 object-contain" /></button>
-        <button onClick={() => setActiveTab("community")} className={`flex flex-col items-center justify-center w-9 h-9 rounded-xl transition-all ${activeTab === "community" ? "text-blue-500 scale-105" : "text-gray-400"}`}><Users className="w-4 h-4" /></button>
-        <button
-          onClick={() => setActiveTab("dex")}
-          className={`flex flex-col items-center justify-center w-9 h-9 rounded-xl transition-all relative ${activeTab === "dex" ? "text-blue-500 scale-105" : "text-gray-400"}`} style={{marginLeft: '47px'}}
-        >
-          <BookOpen className="w-4 h-4" />
-          {/* 수집 개수 배지 */}
-          <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-[7px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center">
+      {/* 하단 네비게이션 (7탭) */}
+      <nav className="absolute bottom-0 left-0 right-0 h-20 bg-white border-t border-gray-100 z-10 shadow-lg flex items-end justify-around px-2 pb-2">
+        {/* 채팅 */}
+        <button onClick={() => setActiveTab("chat")} className={`flex flex-col items-center justify-center gap-0.5 w-10 h-12 rounded-xl transition-all ${activeTab === "chat" ? "text-blue-500" : "text-gray-400"}`}>
+          <MessageSquare className="w-5 h-5" />
+          <span className="text-[8px] font-bold">대화</span>
+        </button>
+        {/* 달력 */}
+        <button onClick={() => setActiveTab("calendar")} className={`flex flex-col items-center justify-center gap-0.5 w-10 h-12 rounded-xl transition-all ${activeTab === "calendar" ? "text-blue-500" : "text-gray-400"}`}>
+          <CalendarIcon className="w-5 h-5" />
+          <span className="text-[8px] font-bold">달력</span>
+        </button>
+        {/* 커뮤니티 */}
+        <button onClick={() => setActiveTab("community")} className={`flex flex-col items-center justify-center gap-0.5 w-10 h-12 rounded-xl transition-all ${activeTab === "community" ? "text-blue-500" : "text-gray-400"}`}>
+          <Users className="w-5 h-5" />
+          <span className="text-[8px] font-bold">커뮤니티</span>
+        </button>
+        {/* 고양이 방 (중앙 강조) */}
+        <button onClick={() => setActiveTab("room")} className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl -translate-y-3 transition-all shadow-md shrink-0 ${activeTab === "room" ? "bg-blue-500 text-white" : "bg-gray-50 text-gray-400 border border-gray-200"}`}>
+          <img src={CAT_CHARACTERS[catMood].image} alt="Cat Icon" className="w-9 h-9 object-contain" />
+        </button>
+        {/* 도감 */}
+        <button onClick={() => setActiveTab("dex")} className={`flex flex-col items-center justify-center gap-0.5 w-10 h-12 rounded-xl transition-all relative ${activeTab === "dex" ? "text-blue-500" : "text-gray-400"}`}>
+          <BookOpen className="w-5 h-5" />
+          <span className="text-[8px] font-bold">도감</span>
+          <span className="absolute top-0.5 right-0.5 bg-blue-500 text-white text-[7px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center">
             {collectedCats.length}
           </span>
         </button>
-        <button onClick={() => setActiveTab("report")} className={`flex flex-col items-center justify-center w-9 h-9 rounded-xl transition-all ${activeTab === "report" ? "text-blue-500 scale-105" : "text-gray-400"}`}><BarChart2 className="w-4 h-4" /></button>
-        <button onClick={() => setActiveTab("admin")} className={`flex flex-col items-center justify-center w-9 h-9 rounded-xl transition-all ${activeTab === "admin" ? "text-blue-500 scale-105" : "text-gray-400"}`}><Shield className="w-4 h-4" /></button>
+        {/* 리포트 */}
+        <button onClick={() => setActiveTab("report")} className={`flex flex-col items-center justify-center gap-0.5 w-10 h-12 rounded-xl transition-all ${activeTab === "report" ? "text-blue-500" : "text-gray-400"}`}>
+          <BarChart2 className="w-5 h-5" />
+          <span className="text-[8px] font-bold">리포트</span>
+        </button>
+        {/* 관리자 */}
+        <button onClick={() => setActiveTab("admin")} className={`flex flex-col items-center justify-center gap-0.5 w-10 h-12 rounded-xl transition-all ${activeTab === "admin" ? "text-blue-500" : "text-gray-400"}`}>
+          <Shield className="w-5 h-5" />
+          <span className="text-[8px] font-bold">관리자</span>
+        </button>
       </nav>
 
       {/* MODAL: Stripe 결제 상점 */}
