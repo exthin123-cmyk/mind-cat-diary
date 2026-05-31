@@ -192,6 +192,37 @@ export default function Home() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentMusic, setCurrentMusic] = useState<{ title: string; url: string }>(LOFI_PLAYLIST.default);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const meowAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // 야옹 소리 효과음 URLs (다양한 야옹 소리)
+  const MEOW_SOUNDS = [
+    "https://www.soundjay.com/misc/sounds/cat-meow-1.mp3",
+    "https://www.soundjay.com/misc/sounds/cat-meow-2.mp3",
+    "https://www.soundjay.com/misc/sounds/cat-meow-3.mp3",
+    // 폴백: Web Audio API로 생성한 야옹 톤
+  ];
+
+  // 야옹 소리 재생 함수 (Web Audio API 기반)
+  const playMeow = () => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      // 야옹스러운 주파수 스웹
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(800, ctx.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.15);
+      oscillator.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.3);
+      gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + 0.5);
+    } catch (e) {
+      // 오디오 컨텍스트 생성 실패 시 조용히 무시
+    }
+  };
 
   // --- 달력 ---
   const [currentDate, setCurrentDate] = useState(new Date(2026, 1, 15));
@@ -268,6 +299,14 @@ export default function Home() {
     ];
     setDailyCatMessage(msgs[Math.floor(Math.random() * msgs.length)]);
   }, [activeTab]);
+
+  // catMood 변경 시 해당 캐릭터의 전용 Lofi 음악으로 자동 전환
+  useEffect(() => {
+    const catMusic = CAT_CHARACTERS[catMood]?.lofiMusic;
+    if (catMusic) {
+      setCurrentMusic(catMusic);
+    }
+  }, [catMood]);
 
   // OAuth 로그인 후 프로필 동기화
   useEffect(() => {
@@ -736,7 +775,7 @@ export default function Home() {
                 })}
               </div>
 
-              <div className="relative z-10 flex flex-col items-center cursor-pointer group" onClick={() => { setBubbleText(`나를 터치해줘서 고맙다냥! [${CAT_CHARACTERS[catMood].name}]인 나는 언제나 드림님 편이다냥! 💕`); gainExp(5, "고양이 교감"); completeMission("m4"); }}>
+              <div className="relative z-10 flex flex-col items-center cursor-pointer group" onClick={() => { playMeow(); setBubbleText(`나를 터치해줘서 고맙다냥! [${CAT_CHARACTERS[catMood].name}]인 나는 언제나 드림님 편이다냥! 💕`); gainExp(5, "고양이 교감"); completeMission("m4"); }}>
                 <div className="bg-gray-800 text-white text-[10px] font-bold px-3 py-0.5 rounded-full whitespace-nowrap border border-gray-700 shadow-sm mb-2 z-20">
                   {catName} ({CAT_CHARACTERS[catMood].name.split(" ")[0]})
                 </div>
@@ -1235,7 +1274,43 @@ export default function Home() {
               <div className="flex items-center gap-1.5"><h3 className="text-sm font-bold text-gray-800">꾸미기 소품 상점</h3><span className="text-[10px] bg-gray-50 border border-gray-100 text-gray-600 px-2 py-0.5 rounded-full flex items-center gap-1 font-bold">🍎 {apples}개</span></div>
               <button onClick={() => setIsShopOpen(false)} className="p-1 rounded-lg hover:bg-gray-50"><X className="w-4 h-4 text-gray-400" /></button>
             </div>
-            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+
+            {/* 캐릭터 맞춤 추천 소품 */}
+            {CAT_CHARACTERS[catMood].themeItems.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5">
+                  <img src={CAT_CHARACTERS[catMood].image} alt="" className="w-5 h-5 object-contain" />
+                  <span className="text-[10px] font-black text-blue-600">{CAT_CHARACTERS[catMood].name.split(" ")[0]} 매첩 추천 소품 ✨</span>
+                </div>
+                <div className="space-y-1.5">
+                  {CAT_CHARACTERS[catMood].themeItems.map(itemId => {
+                    const item = SHOP_ITEMS.find(si => si.id === itemId);
+                    if (!item) return null;
+                    const isBought = myItems.includes(item.id);
+                    const isEquipped = equippedItems.includes(item.id);
+                    return (
+                      <div key={item.id} className="flex items-center justify-between p-2.5 rounded-xl border border-blue-100 bg-blue-50/50">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-xl shrink-0">{item.emoji}</span>
+                          <div>
+                            <h4 className="font-bold text-xs text-gray-700">{item.name}</h4>
+                            <p className="text-[9px] text-blue-500 font-bold">캐릭터 매첩 아이템 ⭐</p>
+                          </div>
+                        </div>
+                        <button onClick={() => handleBuyItem(item)} className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${isEquipped ? "bg-gray-800 text-white" : isBought ? "bg-gray-200 text-gray-700" : "bg-blue-500 hover:bg-blue-600 text-white shadow-sm"}`}>
+                          {isEquipped ? "장착 해제" : isBought ? "배치" : `🍎 ${item.price}`}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="border-t border-gray-100 pt-2">
+                  <span className="text-[9px] font-bold text-gray-400">전체 소품 목록</span>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
               {SHOP_ITEMS.map((item) => {
                 const isBought = myItems.includes(item.id), isEquipped = equippedItems.includes(item.id);
                 return (

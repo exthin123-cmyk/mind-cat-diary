@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { X, Lock, Star, BookOpen, Trophy, ChevronRight } from "lucide-react";
+import { X, Lock, Star, BookOpen, Share2, Check, Music } from "lucide-react";
 import { MoodType, CAT_CHARACTERS, CatCharacter } from "../lib/types";
+import { toast } from "sonner";
 
 interface DexProps {
   collectedCats: MoodType[];       // 수집된 냥이 목록
@@ -248,6 +249,12 @@ export default function Dex({ collectedCats, currentCatMood, level, testCount, a
                     <p className="text-xs font-bold text-pink-700 italic leading-relaxed">"{selectedCat.quote}"</p>
                   </div>
 
+                  {/* Lofi 음악 표시 */}
+                  <div className="flex items-center gap-2 p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                    <Music className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                    <span className="text-[10px] font-bold text-gray-600">전용 Lofi: {selectedCat.lofiMusic.title}</span>
+                  </div>
+
                   {/* 방에 배치하기 버튼 */}
                   <button
                     onClick={() => {
@@ -261,6 +268,23 @@ export default function Dex({ collectedCats, currentCatMood, level, testCount, a
                     }`}
                   >
                     {currentCatMood === selectedCat.type ? "✅ 현재 방에 있는 냥이다냥!" : `🏠 ${selectedCat.name.split(" ")[0]}를 방에 배치하기냥`}
+                  </button>
+
+                  {/* 도감 카드 공유 버튼 */}
+                  <button
+                    onClick={async () => {
+                      const shareText = `🐾 Mind Cat Diary 도감 카드\n\n${selectedCat.emoji} ${selectedCat.name}\n#${String(selectedCat.dexNo).padStart(3, "0")} | ${selectedCat.rarityLabel}\n\n"${selectedCat.quote}"\n\n특기: ${selectedCat.specialty}\n\n나만의 감정냥이를 만나보라냥! 🍎\n${window.location.origin}`;
+                      if (navigator.share) {
+                        try { await navigator.share({ title: `Mind Cat Diary - ${selectedCat.name}`, text: shareText, url: window.location.origin }); }
+                        catch (e) {}
+                      } else {
+                        await navigator.clipboard.writeText(shareText);
+                        toast.success("도감 카드가 클립보드에 복사되었다냥! 🐾");
+                      }
+                    }}
+                    className="w-full py-2.5 rounded-xl font-bold text-xs bg-pink-50 hover:bg-pink-100 text-pink-600 border border-pink-200 transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <Share2 className="w-3.5 h-3.5" /> 이 냥이 카드 공유하기냥
                   </button>
                 </>
               ) : (

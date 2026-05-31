@@ -30,6 +30,10 @@ export interface CatCharacter {
   unlockCondition: string;
   specialty: string;
   quote: string;
+  // 캐릭터 전용 Lofi 음악
+  lofiMusic: { title: string; url: string };
+  // 캐릭터 맞춤 추천 소품 ID 목록
+  themeItems: string[];
 }
 
 export const CAT_CHARACTERS: Record<MoodType, CatCharacter> = {
@@ -37,15 +41,14 @@ export const CAT_CHARACTERS: Record<MoodType, CatCharacter> = {
     type: "unfair",
     name: "억울냥 (Unfair Cat)",
     image: "/manus-storage/unfair_cat_bb093496.png",
-    description: "새파란 사과를 소중하게 꼭 쥐고 있는, 별빛 눈망울의 검은 고양이냥!",
+    description: "새파란 사과를 소중하게 꼽 쿥고 있는, 별빛 눈망울의 검은 고양이냥!",
     color: "bg-[#E0F2FE]",
-    dexNo: 1,
-    rarity: "common",
-    rarityLabel: "일반",
-    emoji: "🍎",
+    dexNo: 1, rarity: "common", rarityLabel: "일반", emoji: "🍎",
     unlockCondition: "심리테스트에서 억울냥 결과를 받으면 해금된다냥!",
     specialty: "억울한 감정을 가장 깊이 공감하는 능력",
-    quote: "내가 잘못한 게 아닌데... 그래도 괜찮다냥. 내가 알아주겠다냥 🐾"
+    quote: "내가 잘못한 게 아닌데... 그래도 괴찮다냥. 내가 알아주겠다냥 🐾",
+    lofiMusic: { title: "따뜻한 위로 Lofi ☀️", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
+    themeItems: ["f3", "a1", "w1"]
   },
   anxious: {
     type: "anxious",
@@ -59,7 +62,9 @@ export const CAT_CHARACTERS: Record<MoodType, CatCharacter> = {
     emoji: "📦",
     unlockCondition: "심리테스트에서 불안냥 결과를 받으면 해금된다냥!",
     specialty: "불안한 마음을 안정시켜주는 4-4-4 호흡법 전수",
-    quote: "상자 안이 제일 안전하다냥. 하지만 밖으로 나가는 용기도 소중하다냥 💙"
+    quote: "상자 안이 제일 안전하다냥. 하지만 밖으로 나가는 용기도 소중하다냥 💙",
+    lofiMusic: { title: "평온한 숨결 Lofi 🌲", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" },
+    themeItems: ["f4", "a5", "w4"]
   },
   lonely: {
     type: "lonely",
@@ -73,7 +78,9 @@ export const CAT_CHARACTERS: Record<MoodType, CatCharacter> = {
     emoji: "🧸",
     unlockCondition: "심리테스트에서 외롭냥 결과를 받으면 해금된다냥!",
     specialty: "외로운 마음을 따뜻하게 안아주는 공감 능력",
-    quote: "혼자라도 괜찮다냥. 내가 항상 곁에 있어줄 거다냥 🤍"
+    quote: "혼자라도 괜찮다냥. 내가 항상 곁에 있어줄 거다냥 🤍",
+    lofiMusic: { title: "별빛 밤하늘 Lofi 🌌", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3" },
+    themeItems: ["f2", "a2", "w3"]
   },
   lethargic: {
     type: "lethargic",
@@ -87,7 +94,9 @@ export const CAT_CHARACTERS: Record<MoodType, CatCharacter> = {
     emoji: "💤",
     unlockCondition: "심리테스트에서 무기력냥 결과를 받으면 해금된다냥!",
     specialty: "완벽한 휴식의 기술을 전수하는 수면 마스터",
-    quote: "아무것도 안 하는 것도 용기다냥. 오늘은 그냥 쉬어도 된다냥 😴"
+    quote: "아무것도 안 하는 것도 용기다냥. 오늘은 그냥 쉬어도 된다냥 😴",
+    lofiMusic: { title: "노곤노곤 자장가 Lofi 💤", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" },
+    themeItems: ["f6", "a7", "w2"]
   },
   angry: {
     type: "angry",
@@ -101,7 +110,9 @@ export const CAT_CHARACTERS: Record<MoodType, CatCharacter> = {
     emoji: "🔥",
     unlockCondition: "심리테스트에서 화남냥 결과를 받거나, 일기에 분노 감정을 3번 이상 기록하면 해금된다냥!",
     specialty: "화난 감정을 건강하게 표현하는 방법 코치",
-    quote: "화가 나는 건 당연하다냥. 그 에너지를 올바른 방향으로 쓰면 된다냥 🔥"
+    quote: "화가 나는 건 당연하다냥. 그 에너지를 올바른 방향으로 쓰면 된다냥 🔥",
+    lofiMusic: { title: "불꽃튀는 마음 Lofi 🔥", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3" },
+    themeItems: ["f7", "a3", "w1"]
   },
   love: {
     type: "love",
@@ -115,7 +126,9 @@ export const CAT_CHARACTERS: Record<MoodType, CatCharacter> = {
     emoji: "💖",
     unlockCondition: "심리테스트에서 사랑냥 결과를 받거나, 커뮤니티에서 하트를 10개 이상 받으면 해금된다냥!",
     specialty: "사랑과 긍정 에너지를 전파하는 힐링 마스터",
-    quote: "세상 모든 것을 사랑하면 세상도 나를 사랑해준다냥 💖"
+    quote: "세상 모든 것을 사랑하면 세상도 나를 사랑해준다냥 💖",
+    lofiMusic: { title: "핑크빛 사랑 Lofi 💖", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3" },
+    themeItems: ["a2", "a7", "w3"]
   },
   shy: {
     type: "shy",
@@ -129,7 +142,9 @@ export const CAT_CHARACTERS: Record<MoodType, CatCharacter> = {
     emoji: "🌸",
     unlockCondition: "심리테스트에서 부끄냥 결과를 받거나, 커뮤니티에 첫 글을 작성하면 해금된다냥!",
     specialty: "수줍음을 귀여움으로 승화시키는 특별한 재능",
-    quote: "부끄러운 건 나쁜 게 아니다냥. 그게 바로 나의 매력이다냥 🌸"
+    quote: "부끄러운 건 나쁜 게 아니다냥. 그게 바로 나의 매력이다냥 🌸",
+    lofiMusic: { title: "수줄수줄 파스텔 Lofi 🌸", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3" },
+    themeItems: ["a1", "f2", "w3"]
   },
   shocked: {
     type: "shocked",
@@ -143,7 +158,9 @@ export const CAT_CHARACTERS: Record<MoodType, CatCharacter> = {
     emoji: "❗",
     unlockCondition: "심리테스트에서 놀람냥 결과를 받거나, 레벨 3 이상이 되면 해금된다냥!",
     specialty: "세상의 모든 놀라운 것들을 발견하는 탐험 능력",
-    quote: "세상은 항상 놀라운 일로 가득하다냥! 그게 바로 삶의 재미다냥 ❗"
+    quote: "세상은 항상 놀라운 일로 가득하다냥! 그게 바로 삶의 재미다냥 ❗",
+    lofiMusic: { title: "놀라운 탐험 Lofi ❗", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3" },
+    themeItems: ["f1", "a5", "w4"]
   },
   bored: {
     type: "bored",
@@ -157,7 +174,9 @@ export const CAT_CHARACTERS: Record<MoodType, CatCharacter> = {
     emoji: "😑",
     unlockCondition: "심리테스트에서 지루냥 결과를 받거나, 일기를 5일 연속으로 작성하면 해금된다냥!",
     specialty: "지루함 속에서 새로운 취미를 찾아내는 능력",
-    quote: "지루하다는 건 새로운 자극을 원한다는 신호다냥. 뭔가 새로운 걸 해보라냥 😑"
+    quote: "지루하다는 건 새로운 자극을 원한다는 신호다냥. 뭔가 새로운 걸 해보라냥 😑",
+    lofiMusic: { title: "시크한 일상 Lofi 😑", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3" },
+    themeItems: ["f5", "a3", "w1"]
   },
   depressed: {
     type: "depressed",
@@ -171,7 +190,9 @@ export const CAT_CHARACTERS: Record<MoodType, CatCharacter> = {
     emoji: "🌧️",
     unlockCondition: "심리테스트에서 우울냥 결과를 받거나, 냥이와 대화를 10번 이상 하면 해금된다냥!",
     specialty: "비 오는 날의 따뜻한 위로와 공감 능력",
-    quote: "비가 온 뒤에 땅이 굳는 것처럼, 이 슬픔도 나를 더 단단하게 만든다냥 🌧️"
+    quote: "비가 온 뒤에 땅이 굳는 것처럼, 이 슬픔도 나를 더 단단하게 만든다냥 🌧️",
+    lofiMusic: { title: "비 오는 날 Lofi 🌧️", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
+    themeItems: ["f6", "a7", "w2"]
   },
   excited: {
     type: "excited",
@@ -185,7 +206,9 @@ export const CAT_CHARACTERS: Record<MoodType, CatCharacter> = {
     emoji: "⚡",
     unlockCondition: "심리테스트에서 신남냥 결과를 받거나, 레벨 5 이상이 되면 해금된다냥!",
     specialty: "신나는 에너지로 주변 모두를 활기차게 만드는 능력",
-    quote: "오늘 하루도 최고다냥! 이 에너지로 뭐든 다 할 수 있다냥 ⚡"
+    quote: "오늘 하루도 최고다냥! 이 에너지로 뭐든 다 할 수 있다냥 ⚡",
+    lofiMusic: { title: "신나는 에너지 Lofi ⚡", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3" },
+    themeItems: ["f1", "a4", "w4"]
   },
   scared: {
     type: "scared",
@@ -199,7 +222,9 @@ export const CAT_CHARACTERS: Record<MoodType, CatCharacter> = {
     emoji: "👻",
     unlockCondition: "심리테스트에서 겁먹냥 결과를 받거나, 심리테스트를 3번 이상 완료하면 해금된다냥!",
     specialty: "두려움을 용기로 바꾸는 마음의 연금술",
-    quote: "무서운 건 당연하다냥. 그래도 한 발짝 내딛는 것이 용기다냥 👻"
+    quote: "무서운 건 당연하다냥. 그래도 한 발짝 내딛는 것이 용기다냥 👻",
+    lofiMusic: { title: "용기를 내에 Lofi 👻", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3" },
+    themeItems: ["f4", "a6", "w2"]
   },
   proud: {
     type: "proud",
@@ -213,7 +238,9 @@ export const CAT_CHARACTERS: Record<MoodType, CatCharacter> = {
     emoji: "🏆",
     unlockCondition: "심리테스트에서 뿌듯냥 결과를 받거나, 레벨 7 이상이 되면 해금된다냥!",
     specialty: "성취감을 극대화하고 자존감을 높여주는 응원 능력",
-    quote: "오늘 해낸 일이 아무리 작아도 그건 분명 대단한 일이다냥 🏆"
+    quote: "오늘 해낸 일이 아무리 작아도 그건 분명 대단한 일이다냥 🏆",
+    lofiMusic: { title: "성취감 가득 Lofi 🏆", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-14.mp3" },
+    themeItems: ["a4", "f7", "w4"]
   },
   curious: {
     type: "curious",
@@ -227,7 +254,9 @@ export const CAT_CHARACTERS: Record<MoodType, CatCharacter> = {
     emoji: "🔍",
     unlockCondition: "심리테스트에서 궁금냥 결과를 받거나, 커뮤니티에 댓글을 5개 이상 달면 해금된다냥!",
     specialty: "모든 것에 호기심을 갖고 탐구하는 지식 탐험가",
-    quote: "모르는 게 있다는 건 배울 게 있다는 뜻이다냥. 항상 궁금해하라냥 🔍"
+    quote: "모르는 게 있다는 건 배울 게 있다는 뜻이다냥. 항상 궁금해하라냥 🔍",
+    lofiMusic: { title: "호기심 가득 Lofi 🔍", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" },
+    themeItems: ["f1", "a5", "w4"]
   },
   guilty: {
     type: "guilty",
@@ -241,7 +270,9 @@ export const CAT_CHARACTERS: Record<MoodType, CatCharacter> = {
     emoji: "🙏",
     unlockCondition: "심리테스트에서 미안냥 결과를 받거나, 일기에 감사 내용을 10번 이상 기록하면 해금된다냥!",
     specialty: "진심 어린 사과와 화해를 이끌어내는 공감 능력",
-    quote: "미안하다고 말하는 용기가 관계를 더 깊게 만든다냥 🙏"
+    quote: "미안하다고 말하는 용기가 관계를 더 깊게 만든다냥 🙏",
+    lofiMusic: { title: "진심 어린 사과 Lofi 🙏", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3" },
+    themeItems: ["a2", "f5", "w3"]
   },
   relaxed: {
     type: "relaxed",
@@ -255,7 +286,9 @@ export const CAT_CHARACTERS: Record<MoodType, CatCharacter> = {
     emoji: "🌿",
     unlockCondition: "심리테스트에서 편안냥 결과를 받거나, 모든 냥이를 1마리 이상 수집하면 해금된다냥!",
     specialty: "마음의 평화를 전파하는 궁극의 힐링 마스터",
-    quote: "지금 이 순간, 이대로도 충분히 완벽하다냥. 그냥 있어도 된다냥 🌿"
+    quote: "지금 이 순간, 이대로도 충분히 완벽하다냥. 그냥 있어도 된다냥 🌿",
+    lofiMusic: { title: "평온한 숲속 Lofi 🌿", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3" },
+    themeItems: ["f6", "f2", "w4"]
   }
 };
 
