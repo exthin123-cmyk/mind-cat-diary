@@ -6,7 +6,7 @@ import {
   MessageSquare, Calendar as CalendarIcon, Settings, Mail, Send, Plus,
   ChevronLeft, ChevronRight, Heart, Trash2, X, Music, ShoppingBag, Users,
   Shield, MessageCircle, TrendingUp, ExternalLink, CreditCard, LogIn,
-  UserPlus, BarChart2, BookOpen
+  UserPlus, BarChart2, BookOpen, Share2, Copy, Check
 } from "lucide-react";
 import { toast } from "sonner";
 import { MoodType, CAT_CHARACTERS, SHOP_ITEMS, ShopItem, ScheduleEvent, FeedPost, QUESTION_BANK } from "../lib/types";
@@ -136,6 +136,34 @@ export default function Home() {
     { id: "m5", icon: "🏠", title: "방 꾸미기",          desc: "소품 상점에서 아이템을 방에 배치하기",      reward: 2, done: false },
   ]);
   const [isMissionOpen, setIsMissionOpen] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+
+  // 공유하기 함수 (Web Share API + 클립보드 폴백)
+  const handleShare = async (customText?: string) => {
+    const shareUrl = window.location.origin;
+    const shareTitle = "Mind Cat Diary 🐾";
+    const shareText = customText ||
+      `감정냥이와 함께하는 마음 힐링 다이어리 앱! 심리테스트로 나만의 감정냥이를 만나고, 매일 마음일기를 쓰면 AI가 힐링 솔루션을 줘준다냥! 🍎`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
+        toast.success("공유해줘서 고맕다냥! 🐾");
+      } catch (err) {
+        // 취소 시 아무 처리
+      }
+    } else {
+      // Web Share API 미지원 환경: 클립보드 복사
+      try {
+        await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+        setIsCopied(true);
+        toast.success("링크가 클립보드에 복사되었다냥! 🐾");
+        setTimeout(() => setIsCopied(false), 2000);
+      } catch {
+        toast.error("공유에 실패했다냥. 주소를 직접 복사해달라냥: " + shareUrl);
+      }
+    }
+  };
 
   // 미션 완료 처리 함수
   const completeMission = (missionId: string) => {
@@ -785,9 +813,16 @@ export default function Home() {
               )}
             </div>
 
-            <div className="flex gap-3 justify-center">
-              <button onClick={() => setIsShopOpen(true)} className="flex items-center gap-1.5 px-5 py-3 bg-gray-800 text-white font-bold text-xs rounded-xl shadow-sm hover:bg-gray-700 transition-colors"><ShoppingBag className="w-4 h-4" /> 소품 상점</button>
-              <button onClick={() => { setActiveTab("chat"); setBubbleText("무슨 재밋는 이야기를 들려줄 거냥? 🐾"); }} className="flex items-center gap-1.5 px-5 py-3 bg-blue-500 text-white font-bold text-xs rounded-xl shadow-sm hover:bg-blue-600 transition-colors"><MessageSquare className="w-4 h-4" /> 냥이와 대화하기</button>
+            <div className="flex gap-2 justify-center">
+              <button onClick={() => setIsShopOpen(true)} className="flex items-center gap-1 px-4 py-3 bg-gray-800 text-white font-bold text-xs rounded-xl shadow-sm hover:bg-gray-700 transition-colors"><ShoppingBag className="w-4 h-4" /> 소품 상점</button>
+              <button onClick={() => { setActiveTab("chat"); setBubbleText("무슨 재밋는 이야기를 들려줄 거냥? 🐾"); }} className="flex items-center gap-1 px-4 py-3 bg-blue-500 text-white font-bold text-xs rounded-xl shadow-sm hover:bg-blue-600 transition-colors"><MessageSquare className="w-4 h-4" /> 대화하기</button>
+              <button
+                onClick={() => handleShare()}
+                className="flex items-center gap-1 px-4 py-3 bg-pink-500 hover:bg-pink-600 text-white font-bold text-xs rounded-xl shadow-sm transition-colors"
+              >
+                {isCopied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+                공유
+              </button>
             </div>
           </div>
         )}
@@ -900,7 +935,16 @@ export default function Home() {
           <div className="p-5 space-y-5">
             <div className="flex items-center justify-between">
               <div><h2 className="text-base font-bold text-gray-800">마음 숲 피드</h2><p className="text-xs text-gray-500">서로 위로를 나누는 따뜻한 커뮤니티냥 🌳</p></div>
-              <button onClick={() => setIsCommunityWriteOpen(true)} className="flex items-center gap-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-xl transition-colors shadow-sm"><Plus className="w-4 h-4" /> 글쓰기</button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleShare("마음 숲 커뮤니티에서 감정냥이들과 소통하고 있다냥! 나만의 감정냥이를 만나고 매일 마음일기를 쓰면 AI가 힐링 솔루션을 줘준다냥! 🍎")}
+                  className="flex items-center gap-1 px-3 py-2 bg-pink-50 hover:bg-pink-100 text-pink-600 font-bold text-xs rounded-xl border border-pink-200 transition-colors"
+                >
+                  {isCopied ? <Check className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}
+                  공유
+                </button>
+                <button onClick={() => setIsCommunityWriteOpen(true)} className="flex items-center gap-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-xl transition-colors shadow-sm"><Plus className="w-4 h-4" /> 글쓰기</button>
+              </div>
             </div>
             <div className="space-y-4">
               {feedPosts.map(post => (
