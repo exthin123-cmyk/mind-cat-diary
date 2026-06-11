@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
@@ -46,6 +46,15 @@ function generateDiarySolution(title: string, mood: string, thanks: string) {
 
 export default function Home() {
   const { user, isAuthenticated, logout } = useAuth();
+
+  // --- localStorage 키 ---
+  const STORAGE_KEYS = {
+    adminSettings: 'mindcat_admin_settings',
+    generalUsers: 'mindcat_general_users',
+    currentUser: 'mindcat_current_user',
+    userDiaries: 'mindcat_user_diaries',
+    userFeedPosts: 'mindcat_user_feed_posts'
+  };
 
   // --- 앱 뷰 상태 ---
   const [authView, setAuthView] = useState<"landing" | "signup" | "app" | "admin-login">("landing");
@@ -160,6 +169,53 @@ export default function Home() {
   ]);
 
   // --- 함수 ---
+  // --- useEffect: localStorage 초기화 ---
+  useEffect(() => {
+    // 관리자 설정 로드
+    const savedAdminSettings = localStorage.getItem(STORAGE_KEYS.adminSettings);
+    if (savedAdminSettings) {
+      try {
+        setAdminSettings(JSON.parse(savedAdminSettings));
+      } catch (e) {
+        console.error('Failed to load admin settings:', e);
+      }
+    }
+
+    // 일반 사용자 데이터 로드
+    const savedCurrentUser = localStorage.getItem(STORAGE_KEYS.currentUser);
+    if (savedCurrentUser) {
+      try {
+        const userData = JSON.parse(savedCurrentUser);
+        setUserName(userData.nickname);
+        setCatName(userData.catName);
+        setCatMood(userData.catMood);
+        setCollectedCats(userData.collectedCats || []);
+        setAuthView('app');
+      } catch (e) {
+        console.error('Failed to load user data:', e);
+      }
+    }
+
+    // 일기 데이터 로드
+    const savedDiaries = localStorage.getItem(STORAGE_KEYS.userDiaries);
+    if (savedDiaries) {
+      try {
+        setDiaries(JSON.parse(savedDiaries));
+      } catch (e) {
+        console.error('Failed to load diaries:', e);
+      }
+    }
+
+    // 피드 데이터 로드
+    const savedFeedPosts = localStorage.getItem(STORAGE_KEYS.userFeedPosts);
+    if (savedFeedPosts) {
+      try {
+        setFeedPosts(JSON.parse(savedFeedPosts));
+      } catch (e) {
+        console.error('Failed to load feed posts:', e);
+      }
+    }
+  }, []);
   const handleAnswerSelect = (score: Partial<Record<MoodType, number>>) => {
     const newScores = { ...testScores };
     Object.keys(score).forEach(key => {
@@ -302,6 +358,10 @@ export default function Home() {
     );
   }
 
+  // --- 관리자 상태 ---
+  const [adminNewPassword, setAdminNewPassword] = useState("");
+  const [adminNewPasswordConfirm, setAdminNewPasswordConfirm] = useState("");
+
   // === 관리자 로그인 화면 ===
   if (authView === "admin-login") {
     const [adminLoginUsername, setAdminLoginUsername] = useState("");
@@ -326,7 +386,7 @@ export default function Home() {
             </div>
           </div>
           <button onClick={() => {
-            if (adminLoginUsername === "admin" && adminLoginPassword === "123456") {
+            if (adminLoginUsername === "admin" && adminLoginPassword === adminSettings.adminPassword) {
               setIsAdminLoggedIn(true);
               setAuthView("app");
               setActiveTab("admin");
@@ -373,8 +433,18 @@ export default function Home() {
               if (!generalUsername.trim()) { toast.error("사용자명을 입력해달라냥!"); return; }
               if (!generalPassword.trim()) { toast.error("비밀번호를 입력해달라냥!"); return; }
               if (generalPassword !== generalPasswordConfirm) { toast.error("비밀번호가 일치하지 않다냥!"); return; }
+              
+              // 사용자 계정 저장
+              const users = JSON.parse(localStorage.getItem(STORAGE_KEYS.generalUsers) || '{}');
+              if (users[generalUsername]) { toast.error("이미 존재하는 사용자명이다냥!"); return; }
+              users[generalUsername] = { password: generalPassword, nickname: signupNickname, catName: signupCatName, catMood: 'unfair', collectedCats: ['unfair'] };
+              localStorage.setItem(STORAGE_KEYS.generalUsers, JSON.stringify(users));
+              
+              // 현재 사용자 저장
+              localStorage.setItem(STORAGE_KEYS.currentUser, JSON.stringify({ username: generalUsername, nickname: signupNickname, catName: signupCatName, catMood: 'unfair', collectedCats: ['unfair'] }));
+              
               setUserName(signupNickname); setCatName(signupCatName); setAuthView("app"); setIsTestCompleted(false);
-              toast.success(`환영한다냥, ${signupNickname}님! 데이터는 로컬에 저장된다냥! 🐾`);
+              toast.success(`환영한다냥, ${signupNickname}님! 🐾`);
             }} className="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm rounded-2xl transition-colors shadow-md mt-6">가입하기냥 🐾</button>
             <button onClick={() => setIsLoginMode(true)} className="w-full py-3 bg-white hover:bg-gray-50 text-gray-700 font-bold text-sm rounded-2xl border border-gray-200 transition-colors mt-3">이미 가입한 계정으로 로그인</button>
           </>
@@ -387,7 +457,19 @@ export default function Home() {
             </div>
             <button onClick={() => {
               if (!generalUsername.trim() || !generalPassword.trim()) { toast.error("사용자명과 비밀번호를 입력해달라냥!"); return; }
-              setUserName(generalUsername);
+              
+              // 사용자 인증
+              const users = JSON.parse(localStorage.getItem(STORAGE_KEYS.generalUsers) || '{}');
+              const user = users[generalUsername];
+              if (!user || user.password !== generalPassword) { toast.error("사용자명 또는 비밀번호가 틀렸다냥!"); return; }
+              
+              // 현재 사용자 저장
+              localStorage.setItem(STORAGE_KEYS.currentUser, JSON.stringify({ username: generalUsername, ...user }));
+              
+              setUserName(user.nickname);
+              setCatName(user.catName);
+              setCatMood(user.catMood);
+              setCollectedCats(user.collectedCats);
               setAuthView("app");
               setIsTestCompleted(false);
               toast.success(`로그인 성공! 데이터는 로컬에 저장된다냥! 🐾`);
@@ -662,10 +744,28 @@ export default function Home() {
               <h3 className="font-bold text-sm text-gray-800">🔐 비밀번호 변경</h3>
               <div className="space-y-2">
                 <label className="text-xs font-bold text-gray-600">새 비밀번호</label>
-                <input type="password" placeholder="새 비밀번호 입력" className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-red-500" />
+                <input type="password" value={adminNewPassword} onChange={(e) => setAdminNewPassword(e.target.value)} placeholder="새 비밀번호 입력" className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-red-500" />
               </div>
-              <button className="w-full py-2 bg-red-500 hover:bg-red-600 text-white font-bold text-xs rounded-lg transition-colors">비밀번호 변경</button>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-600">비밀번호 재입력</label>
+                <input type="password" value={adminNewPasswordConfirm} onChange={(e) => setAdminNewPasswordConfirm(e.target.value)} placeholder="비밀번호 재입력" className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-red-500" />
+              </div>
+              <button onClick={() => {
+                if (!adminNewPassword.trim()) { toast.error("새 비밀번호를 입력해달라냥!"); return; }
+                if (adminNewPassword !== adminNewPasswordConfirm) { toast.error("비밀번호가 일치하지 않다냥!"); return; }
+                setAdminSettings({...adminSettings, adminPassword: adminNewPassword});
+                localStorage.setItem(STORAGE_KEYS.adminSettings, JSON.stringify({...adminSettings, adminPassword: adminNewPassword}));
+                setAdminNewPassword("");
+                setAdminNewPasswordConfirm("");
+                toast.success("비밀번호가 변경되었다냥! 🔐");
+              }} className="w-full py-2 bg-red-500 hover:bg-red-600 text-white font-bold text-xs rounded-lg transition-colors">비밀번호 변경</button>
             </div>
+
+            {/* 설정 저장 */}
+            <button onClick={() => {
+              localStorage.setItem(STORAGE_KEYS.adminSettings, JSON.stringify(adminSettings));
+              toast.success("모든 설정이 저장되었다냥! 💾");
+            }} className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm rounded-2xl transition-colors shadow-md">모든 설정 저장</button>
           </div>
         )}
       </main>
