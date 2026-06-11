@@ -138,6 +138,10 @@ export default function Home() {
 
   // --- 관리자 상태 ---
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [adminLoginUsername, setAdminLoginUsername] = useState("");
+  const [adminLoginPassword, setAdminLoginPassword] = useState("");
+  const [adminNewPassword, setAdminNewPassword] = useState("");
+  const [adminNewPasswordConfirm, setAdminNewPasswordConfirm] = useState("");
   const [adminSettings, setAdminSettings] = useState({
     pageNames: {
       home: "홈",
@@ -358,14 +362,8 @@ export default function Home() {
     );
   }
 
-  // --- 관리자 상태 ---
-  const [adminNewPassword, setAdminNewPassword] = useState("");
-  const [adminNewPasswordConfirm, setAdminNewPasswordConfirm] = useState("");
-
   // === 관리자 로그인 화면 ===
   if (authView === "admin-login") {
-    const [adminLoginUsername, setAdminLoginUsername] = useState("");
-    const [adminLoginPassword, setAdminLoginPassword] = useState("");
     
     return (
       <div className="flex-1 flex flex-col bg-white h-full overflow-y-auto">
