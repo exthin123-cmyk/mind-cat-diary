@@ -961,7 +961,7 @@ export default function Home() {
 
         {/* 관리자 탭 */}
         {activeTab === "admin" && isAdminLoggedIn && (
-          <div className="flex-1 overflow-hidden h-full">
+          <div className="h-full overflow-y-auto">
             <AdminDashboard />
           </div>
         )}
