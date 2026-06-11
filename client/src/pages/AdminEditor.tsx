@@ -50,6 +50,7 @@ export default function AdminEditor() {
   const [previewMode, setPreviewMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(null);
+  const [uploadedImages, setUploadedImages] = useState<Record<string, string>>({});
 
   // --- 초기화 ---
   useEffect(() => {
@@ -389,8 +390,87 @@ export default function AdminEditor() {
         {activeSection === "images" && (
           <div className="space-y-4">
             <h3 className="font-bold text-lg text-gray-800">🖼️ 이미지 관리</h3>
+
+            {/* 광고 배너 이미지 */}
             <div className="bg-pink-50 rounded-2xl p-4 border-2 border-pink-200 space-y-3">
-              <p className="text-xs text-gray-600 font-bold">이미지 업로드 기능은 추후 추가될 예정입니다.</p>
+              <h4 className="font-bold text-sm text-gray-800">광고 배너 이미지</h4>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-600">이미지 파일 선택</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          const base64 = event.target?.result as string;
+                          setUploadedImages({ ...uploadedImages, bannerImage: base64 });
+                          setAdminSettings({
+                            ...adminSettings,
+                            ads: { ...adminSettings.ads, bannerImage: base64 },
+                          });
+                          saveToHistory("ads.bannerImage", { bannerImage: { before: adminSettings.ads.bannerImage, after: base64 } });
+                          toast.success("이미지가 업로드되었다냥! 🖼️");
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  />
+                  {adminSettings.ads.bannerImage && (
+                    <button
+                      onClick={() => {
+                        setAdminSettings({
+                          ...adminSettings,
+                          ads: { ...adminSettings.ads, bannerImage: "" },
+                        });
+                        setUploadedImages({ ...uploadedImages, bannerImage: "" });
+                        toast.success("이미지가 삭제되었다냥! 🗑️");
+                      }}
+                      className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+              {adminSettings.ads.bannerImage && (
+                <div className="mt-3 rounded-lg overflow-hidden border border-pink-200">
+                  <img src={adminSettings.ads.bannerImage} alt="배너 미리보기" className="w-full h-32 object-cover" />
+                </div>
+              )}
+            </div>
+
+            {/* 캐릭터 이미지 */}
+            <div className="bg-blue-50 rounded-2xl p-4 border-2 border-blue-200 space-y-3">
+              <h4 className="font-bold text-sm text-gray-800">캐릭터 이미지 관리</h4>
+              <p className="text-xs text-gray-600 font-bold">캐릭터별 이미지 업로드 기능</p>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {["unfair", "anxious", "lonely", "lethargic", "angry"].map((charType) => (
+                  <div key={charType} className="bg-white rounded-lg p-2 border border-blue-100">
+                    <p className="text-xs font-bold text-gray-700 mb-1">{charType}</p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            const base64 = event.target?.result as string;
+                            setUploadedImages({ ...uploadedImages, [charType]: base64 });
+                            toast.success(`${charType} 이미지가 업로드되었다냥!`);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="w-full px-2 py-1 rounded text-[10px] font-bold border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
