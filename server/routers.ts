@@ -7,7 +7,7 @@ import { z } from "zod";
 import Stripe from "stripe";
 import { PRODUCTS } from "./products";
 import { getDb } from "./db";
-import { userProfiles, diaries, chatMessages } from "../drizzle/schema";
+import { userProfiles, diaries, chatMessages, adminSettings as adminSettingsTable } from "../drizzle/schema";
 import { eq, and, gte, lte, desc } from "drizzle-orm";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -333,6 +333,55 @@ aiSummary = typeof rawSummary === "string" ? rawSummary : "";
         const session = await stripe.checkout.sessions.create(sessionConfig);
         return { url: session.url };
       })
+  }),
+
+  // =====================================================
+  // 관리자 설정 라우터 (DB 영구 저장 - 모든 기기 반영)
+  // =====================================================
+  adminConfig: router({
+    // 관리자 설정 조회 (공개 - 일반 사용자도 읽기 가능)
+    get: publicProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return null;
+      const rows = await db.select().from(adminSettingsTable).limit(1);
+      if (rows.length > 0) return rows[0];
+      await db.insert(adminSettingsTable).values({
+        adminPassword: "123456",
+        adBannerText: "상담이 필요하신가요?",
+        adBannerLink: "",
+        mindBlockLink: "",
+        musicGameLink: "",
+      });
+      const created = await db.select().from(adminSettingsTable).limit(1);
+      return created[0] || null;
+    }),
+
+    // 관리자 설정 저장
+    save: publicProcedure
+      .input(z.object({
+        adminPassword: z.string().optional(),
+        adBannerText: z.string().optional(),
+        adBannerLink: z.string().optional(),
+        mindBlockLink: z.string().optional(),
+        musicGameLink: z.string().optional(),
+        pageNameChat: z.string().optional(),
+        pageNameCalendar: z.string().optional(),
+        pageNameCommunity: z.string().optional(),
+        pageNameDex: z.string().optional(),
+        pageNameReport: z.string().optional(),
+        pageNameGame: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return { success: false };
+        const rows = await db.select().from(adminSettingsTable).limit(1);
+        if (rows.length === 0) {
+          await db.insert(adminSettingsTable).values({ adminPassword: "123456", ...input });
+        } else {
+          await db.update(adminSettingsTable).set(input);
+        }
+        return { success: true };
+      }),
   })
 });
 

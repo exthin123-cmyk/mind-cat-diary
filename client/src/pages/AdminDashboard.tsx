@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Save, Upload, Trash, Search, LogOut, Plus, Edit, X, Check, RotateCcw, Bell, Music, Users, FileText, BarChart2, Settings, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 
 // --- 타입 정의 ---
 interface Question {
@@ -103,6 +104,13 @@ const DEFAULT_ONBOARDING = [
 ];
 
 export default function AdminDashboard() {
+  // --- DB 연동 ---
+  const { data: dbConfig } = trpc.adminConfig.get.useQuery();
+  const saveConfigMutation = trpc.adminConfig.save.useMutation({
+    onSuccess: () => toast.success("DB에 저장되었다냥! 모든 기기에 반영됩니다! ✅"),
+    onError: () => toast.error("DB 저장 실패. localStorage에만 저장됩니다."),
+  });
+
   // --- 탭 상태 ---
   const [activeTab, setActiveTab] = useState<"content" | "users" | "ads" | "music" | "notifications" | "logs" | "history" | "settings">("content");
 
@@ -192,6 +200,24 @@ export default function AdminDashboard() {
       adminPassword: "123456"
     }));
   }, []);
+
+  // DB에서 불러온 설정으로 덮어쓰기
+  useEffect(() => {
+    if (dbConfig) {
+      setAdminSettings(prev => ({
+        ...prev,
+        gameLinks: {
+          mindBlock: dbConfig.mindBlockLink || "",
+          musicListen: dbConfig.musicGameLink || "",
+        },
+        ads: {
+          bannerText: dbConfig.adBannerText || "상담이 필요하신가요?",
+          bannerLink: dbConfig.adBannerLink || "",
+        },
+        adminPassword: dbConfig.adminPassword || "123456",
+      }));
+    }
+  }, [dbConfig]);
 
   // --- 로그 저장 ---
   const addLog = (action: string, details: string, category: AdminLog["category"] = "system") => {
@@ -795,8 +821,11 @@ export default function AdminDashboard() {
                 <button
                   onClick={() => {
                     localStorage.setItem(STORAGE_KEYS.adminSettings, JSON.stringify(adminSettings));
+                    saveConfigMutation.mutate({
+                      mindBlockLink: adminSettings.gameLinks.mindBlock,
+                      musicGameLink: adminSettings.gameLinks.musicListen,
+                    });
                     addLog("게임 링크 저장", "게임 링크가 업데이트됨", "content");
-                    toast.success("게임 링크가 저장되었다냥! 🎮 일반 화면에 반영됩니다!");
                   }}
                   className="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-colors"
                 >
@@ -833,8 +862,11 @@ export default function AdminDashboard() {
                 <button
                   onClick={() => {
                     localStorage.setItem(STORAGE_KEYS.adminSettings, JSON.stringify(adminSettings));
+                    saveConfigMutation.mutate({
+                      adBannerText: adminSettings.ads.bannerText,
+                      adBannerLink: adminSettings.ads.bannerLink,
+                    });
                     addLog("광고 문구 저장", adminSettings.ads.bannerText, "ad");
-                    toast.success("광고 문구가 저장되었다냥! 📣 일반 화면에 반영됩니다!");
                   }}
                   className="w-full px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-colors"
                 >

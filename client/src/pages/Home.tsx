@@ -48,6 +48,9 @@ function generateDiarySolution(title: string, mood: string, thanks: string) {
 export default function Home() {
   const { user, isAuthenticated, logout } = useAuth();
 
+  // --- DB에서 관리자 설정 조회 (모든 기기 반영) ---
+  const { data: dbAdminConfig } = trpc.adminConfig.get.useQuery();
+
   // --- localStorage 키 ---
   const STORAGE_KEYS = {
     adminSettings: 'mindcat_admin_settings',
@@ -219,7 +222,7 @@ export default function Home() {
       setTodayTestDone(true);
       setLastTestDate(savedLastTestDate);
     }
-    // 관리자 설정 로드
+    // 관리자 설정 로드 (localStorage 폴백)
     const savedAdminSettings = localStorage.getItem(STORAGE_KEYS.adminSettings);
     if (savedAdminSettings) {
       try {
@@ -295,6 +298,25 @@ export default function Home() {
     }
     setLetters(existingLetters);
   }, []);
+
+  // DB에서 관리자 설정 로드 - 모든 기기에서 동일하게 보임
+  useEffect(() => {
+    if (dbAdminConfig) {
+      setAdminSettings(prev => ({
+        ...prev,
+        gameLinks: {
+          mindBlock: dbAdminConfig.mindBlockLink || prev.gameLinks.mindBlock,
+          musicListen: dbAdminConfig.musicGameLink || prev.gameLinks.musicListen,
+        },
+        ads: {
+          bannerText: dbAdminConfig.adBannerText || prev.ads.bannerText,
+          bannerLink: dbAdminConfig.adBannerLink || prev.ads.bannerLink,
+        },
+        adminPassword: dbAdminConfig.adminPassword || prev.adminPassword,
+      }));
+    }
+  }, [dbAdminConfig]);
+
   const handleAnswerSelect = (score: Partial<Record<MoodType, number>>) => {
     const newScores = { ...testScores };
     Object.keys(score).forEach(key => {
