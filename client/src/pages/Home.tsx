@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
@@ -48,16 +48,20 @@ export default function Home() {
   const { user, isAuthenticated, logout } = useAuth();
 
   // --- 앱 뷰 상태 ---
-  const [authView, setAuthView] = useState<"landing" | "signup" | "app">("landing");
+  const [authView, setAuthView] = useState<"landing" | "signup" | "app" | "admin-login">("landing");
   const [signupNickname, setSignupNickname] = useState("");
   const [signupCatName, setSignupCatName] = useState("드림이");
+  const [generalUsername, setGeneralUsername] = useState("");
+  const [generalPassword, setGeneralPassword] = useState("");
+  const [generalPasswordConfirm, setGeneralPasswordConfirm] = useState("");
+  const [isLoginMode, setIsLoginMode] = useState(false);
 
   // --- 심리테스트 ---
   const [isTestCompleted, setIsTestCompleted] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [activeQuestions, setActiveQuestions] = useState<typeof QUESTION_BANK>([]);
-  const [testCount, setTestCount] = useState(0); // 심리테스트 진행 횟수
-  const [isTestPayConfirmOpen, setIsTestPayConfirmOpen] = useState(false); // 사과 차감 확인 모달
+  const [testCount, setTestCount] = useState(0);
+  const [isTestPayConfirmOpen, setIsTestPayConfirmOpen] = useState(false);
   const [testScores, setTestScores] = useState<Record<MoodType, number>>({
     unfair: 0, anxious: 0, lonely: 0, lethargic: 0, angry: 0, love: 0, shy: 0, shocked: 0, bored: 0, depressed: 0,
     excited: 0, scared: 0, proud: 0, curious: 0, guilty: 0, relaxed: 0
@@ -65,8 +69,7 @@ export default function Home() {
 
   // --- 기본 상태 ---
   const [activeTab, setActiveTab] = useState<"room" | "chat" | "calendar" | "community" | "report" | "dex" | "admin">("room");
-  // 수집된 냥이 목록 (심리테스트 결과로 해금)
-  const [collectedCats, setCollectedCats] = useState<MoodType[]>(["unfair"]);  // 기본 억울냥은 항상 수집됨
+  const [collectedCats, setCollectedCats] = useState<MoodType[]>(["unfair"]);
   const [catMood, setCatMood] = useState<MoodType>("unfair");
   const [userName, setUserName] = useState("드림님");
   const [catName, setCatName] = useState("드림이");
@@ -98,386 +101,144 @@ export default function Home() {
     {
       emoji: "🌳",
       title: "커뮤니티 — 마음 숲 피드",
-      desc: "다른 집사들과 감정을 나누고 서로 위로해주는 따뜻한 커뮤니티냥. 하트와 댓글로 소통하고 '상담왕' 배지도 노려보라냥!",
-      highlight: "커뮤니티"
-    },
-    {
-      emoji: "📖",
-      title: "도감 — 감정냥이 수집하기",
-      desc: "심리테스트를 할 때마다 새로운 감정냥이를 수집할 수 있다냥. 총 16마리의 냥이를 모두 모으면 특별한 보상이 기다린다냥!",
-      highlight: "도감"
-    },
-    {
-      emoji: "🍎",
-      title: "사과 & 미션 — 꾸미기 재료 모으기",
-      desc: "매일 미션을 완료하면 사과를 획득할 수 있다냥. 모은 사과로 소품 상점에서 고양이 방을 예쁘게 꾸며보라냥!",
-      highlight: null
+      desc: "다른 사람들과 감정을 나누고 공감받으면서 혼자가 아니라는 걸 느껴보다냥! 따뜻한 댓글로 서로를 응원하는 커뮤니티다냥.",
+      highlight: "마음 숲"
     },
     {
       emoji: "📊",
-      title: "리포트 — 나의 감정 변화 분석",
-      desc: "한 달간 쓴 일기를 AI가 분석해서 감정 분포 차트와 따뜻한 월간 리포트를 만들어준다냥. 로그인하면 데이터가 영구 저장된다냥!",
+      title: "리포트 — 월간 감정 분석",
+      desc: "한 달간의 감정 변화를 차트로 분석하고 AI 요약을 받아볼 수 있다냥! 내 감정 패턴을 이해하고 성장하는 기회다냥.",
       highlight: "리포트"
+    },
+    {
+      emoji: "🎁",
+      title: "도감 — 감정냥이 수집",
+      desc: "심리테스트를 통해 다양한 감정냥이를 만나고 수집해보다냥! 각 냥이마다 특별한 이야기가 있다냥.",
+      highlight: "도감"
     }
   ];
 
-  const [isCopied, setIsCopied] = useState(false);
-
-  // 공유하기 함수 (Web Share API + 클립보드 폴백)
-  const handleShare = async (customText?: string) => {
-    const shareUrl = window.location.origin;
-    const shareTitle = "Mind Cat Diary 🐾";
-    const shareText = customText ||
-      `감정냥이와 함께하는 마음 힐링 다이어리 앱! 심리테스트로 나만의 감정냥이를 만나고, 매일 마음일기를 쓰면 AI가 힐링 솔루션을 줘준다냥! 🍎`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
-        toast.success("공유해줘서 고맕다냥! 🐾");
-      } catch (err) {
-        // 취소 시 아무 처리
-      }
-    } else {
-      // Web Share API 미지원 환경: 클립보드 복사
-      try {
-        await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
-        setIsCopied(true);
-        toast.success("링크가 클립보드에 복사되었다냥! 🐾");
-        setTimeout(() => setIsCopied(false), 2000);
-      } catch {
-        toast.error("공유에 실패했다냥. 주소를 직접 복사해달라냥: " + shareUrl);
-      }
-    }
-  };
-
-
-
-
-
-  // --- 음악 ---
+  // --- 상태 관리 ---
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentMusic, setCurrentMusic] = useState<{ title: string; url: string }>(LOFI_PLAYLIST.default);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const meowAudioRef = useRef<HTMLAudioElement | null>(null);
-
-  // 야옹 소리 효과음 URLs (다양한 야옹 소리)
-  const MEOW_SOUNDS = [
-    "https://www.soundjay.com/misc/sounds/cat-meow-1.mp3",
-    "https://www.soundjay.com/misc/sounds/cat-meow-2.mp3",
-    "https://www.soundjay.com/misc/sounds/cat-meow-3.mp3",
-    // 폴백: Web Audio API로 생성한 야옹 톤
-  ];
-
-  // 야옹 소리 재생 함수 (Web Audio API 기반)
-  const playMeow = () => {
-    try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator = ctx.createOscillator();
-      const gainNode = ctx.createGain();
-      oscillator.connect(gainNode);
-      gainNode.connect(ctx.destination);
-      // 야옹스러운 주파수 스웹
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(800, ctx.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.15);
-      oscillator.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.3);
-      gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-      oscillator.start(ctx.currentTime);
-      oscillator.stop(ctx.currentTime + 0.5);
-    } catch (e) {
-      // 오디오 컨텍스트 생성 실패 시 조용히 무시
-    }
-  };
-
-  // --- 달력 ---
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 1, 15));
-  const [selectedDateStr, setSelectedDateStr] = useState("2026-02-18");
-  const [isAddEventOpen, setIsAddEventOpen] = useState(false);
-  const [inputTitle, setInputTitle] = useState("");
-  const [inputMood, setInputMood] = useState("기쁨 😊");
-  const [inputThanks, setInputThanks] = useState("");
-  const [localEvents, setLocalEvents] = useState<ScheduleEvent[]>([
-    { id: "e1", date: "2026-02-18", title: "광고주와 미팅", mood: "불안 - 미팅이 잘 될까 불안하다", thanks: "도와주는 동료들이 있어 감사하다" }
-  ]);
-
-  // --- AI 냥이와 대화하기 ---
-  const [chatInput, setChatInput] = useState("");
-  const [bubbleText, setBubbleText] = useState("드림아 좋은 아침! 오늘 기분은 어때냥?");
-  const [messages, setMessages] = useState<{ id: string; sender: "user" | "cat"; text: string; timestamp: string }[]>([
-    { id: "m1", sender: "cat", text: "안녕 드림님! 오늘 하루는 어땠어냥? 무슨 일이든 나한테 다 털어놓으라냥! 🐾", timestamp: "10:00" }
-  ]);
-  const [chatHistory, setChatHistory] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
-  const chatEndRef = useRef<HTMLDivElement>(null);
-
-  // --- 커뮤니티 ---
-  const [isCommunityWriteOpen, setIsCommunityWriteOpen] = useState(false);
-  const [newPostText, setNewPostText] = useState("");
-  const [feedPosts, setFeedPosts] = useState<FeedPost[]>([
-    { id: "p1", author: "냥이집사3호", avatar: "/manus-storage/unfair_cat_bb093496.png", content: "오늘 드림이랑 대화하다가 레벨업했어냥! 사과 3개 받아서 바로 선글라스 사줬는데 너무 힙하고 귀엽지 않냐냥? 😎🍎", likes: 12, likedByMe: false, comments: [{ id: "c1", author: "초보집사", text: "우와 부럽다냥! 선글라스 너무 잘 어울린다냥!", date: "10분 전" }], date: "30분 전", hasBestBadge: true },
-    { id: "p2", author: "행복한하루", avatar: "/manus-storage/lonely_cat_dbdd7a45.png", content: "달력에 감사일기 매일 쓰니까 마음이 한결 편안해지는 것 같다냥. 🌸✨", likes: 8, likedByMe: true, comments: [{ id: "c3", author: "냥이집사3호", text: "맞아요냥! 마음의 숲을 가꾸는 느낌이다냥.", date: "15분 전" }], date: "1시간 전", hasBestBadge: false }
-  ]);
-
-  // --- 관리자 ---
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
-  const [adminPassword, setAdminPassword] = useState("");
-  const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
-  const ADMIN_PASSWORD = "123456";
-  const [adminLoginInput, setAdminLoginInput] = useState("");
-  const [newAdminPassword, setNewAdminPassword] = useState("");
-  const [confirmAdminPassword, setConfirmAdminPassword] = useState("");
-  const [adminSettings, setAdminSettings] = useState({
-    adText: "",
-    adLink: "",
-    gameLinks: { mindBlock: "", musicListen: "" },
-    pageNames: { home: "", chat: "", diary: "", calendar: "", community: "", report: "", dex: "" }
-  });
+  const [currentMusicMood, setCurrentMusicMood] = useState<string>("default");
   const [isMailOpen, setIsMailOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [adText, setAdText] = useState("🍎 맛있는 유기농 청송 사과 1+1 한정 특가 세일!");
-  const [adLink, setAdLink] = useState("https://example.com");
-  const [dailyCatMessage, setDailyCatMessage] = useState("오늘 하루도 무사히 마쳐서 너무 다행이다냥. 맛있는 저녁 먹기냥! 🐾");
+  const [isCopied, setIsCopied] = useState(false);
+  const [bubbleText, setBubbleText] = useState("안녕하다냥! 오늘 기분은 어떻냥?");
+  const [dailyCatMessage, setDailyCatMessage] = useState("오늘도 함께 있어줘서 고마워냥!");
 
-  // --- 감정 리포트 ---
-  const [reportYear, setReportYear] = useState(2026);
-  const [reportMonth, setReportMonth] = useState(2);
+  // --- 관리자 상태 ---
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [adminSettings, setAdminSettings] = useState({
+    pageNames: {
+      home: "홈",
+      chat: "대화",
+      diary: "일기",
+      calendar: "달력",
+      community: "마음 숲",
+      report: "리포트",
+      dex: "도감"
+    },
+    gameLinks: {
+      mindBlock: "https://example.com/mindblock",
+      musicListen: "https://example.com/music"
+    },
+    ads: {
+      bannerText: "상담이 필요하신가요?",
+      bannerLink: "https://example.com/counseling"
+    },
+    adminPassword: "123456"
+  });
 
-  // --- tRPC 훅 ---
-  const sendMessageMutation = trpc.chat.sendMessage.useMutation();
-  const createDiaryMutation = trpc.diary.create.useMutation();
-  const createCheckout = trpc.payment.createCheckout.useMutation();
-  const updateProfileMutation = trpc.profile.update.useMutation();
-  const profileQuery = trpc.profile.get.useQuery(undefined, { enabled: isAuthenticated });
-  const reportQuery = trpc.report.monthly.useQuery({ year: reportYear, month: reportMonth }, { enabled: activeTab === "report" && isAuthenticated });
+  // --- 일기 & 달력 ---
+  const [selectedDateStr, setSelectedDateStr] = useState(new Date().toISOString().split("T")[0]);
+  const [diaries, setDiaries] = useState<Record<string, { avatar: MoodType; title: string; thanks: string; solution?: { tip: string; steps: string[]; music: string } }>>({});
+  const [scheduleEvents, setScheduleEvents] = useState<ScheduleEvent[]>([]);
+  const [feedPosts, setFeedPosts] = useState<FeedPost[]>([
+    { id: "1", author: "드림님", avatar: "😊", content: "오늘 날씨가 정말 좋았어냥! ☀️", date: new Date(Date.now() - 3600000).toISOString(), likes: 5, likedByMe: false, comments: [] },
+    { id: "2", author: "냥냥이", avatar: "😢", content: "월요일이 또 왔다... 😢", date: new Date(Date.now() - 7200000).toISOString(), likes: 3, likedByMe: false, comments: [] }
+  ]);
 
-  // 초기화
-  useEffect(() => {
-    const shuffled = [...QUESTION_BANK].sort(() => 0.5 - Math.random());
-    setActiveQuestions(shuffled.slice(0, 10));
-  }, []);
-
-  // 온보딩: 심리테스트 완료 후 첫 방문 시 자동 표시
-  useEffect(() => {
-    if (isTestCompleted && authView === "app") {
-      const seen = localStorage.getItem("mindcat-onboarding-seen");
-      if (!seen) {
-        setTimeout(() => setIsOnboardingOpen(true), 600);
+  // --- 함수 ---
+  const handleAnswerSelect = (score: Partial<Record<MoodType, number>>) => {
+    const newScores = { ...testScores };
+    Object.keys(score).forEach(key => {
+      const scoreValue = score[key as MoodType];
+      if (scoreValue !== undefined) {
+        newScores[key as MoodType] += scoreValue;
       }
+    });
+    setTestScores(newScores);
+
+    if (currentQuestionIndex < 9) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    } else {
+      const maxMood = Object.entries(newScores).reduce((a, b) => a[1] > b[1] ? a : b)[0] as MoodType;
+      setCatMood(maxMood);
+      if (!collectedCats.includes(maxMood)) {
+        setCollectedCats([...collectedCats, maxMood]);
+      }
+      setIsTestCompleted(true);
+      setTestCount(testCount + 1);
+      setCurrentQuestionIndex(0);
+      setTestScores({
+        unfair: 0, anxious: 0, lonely: 0, lethargic: 0, angry: 0, love: 0, shy: 0, shocked: 0, bored: 0, depressed: 0,
+        excited: 0, scared: 0, proud: 0, curious: 0, guilty: 0, relaxed: 0
+      });
+      setOnboardingStep(0);
+      setIsOnboardingOpen(false);
+      toast.success(`${CAT_CHARACTERS[maxMood].name}를 만났다냥! 🐾`);
     }
-  }, [isTestCompleted, authView]);
+  };
 
-  useEffect(() => {
-    const msgs = [
-      "오늘도 수고 많았다냥! 따뜻한 차 한잔하면서 피로를 날려버리자냥. 🍵",
-      "드림님, 혹시 오늘 억울하거나 힘든 일이 있었다면 나한테 다 말해달라냥! 🐾",
-      "드림님의 마음은 항상 내가 곁에서 따뜻하게 지켜주고 있다냥. 💖",
-      "하아암... 오늘 밤엔 포근하게 꿀잠 자고 좋은 꿈 꾸기냥! 😴💤",
-      "사소한 일에도 기뻐할 줄 아는 드림님은 정말 소중하고 예쁜 존재다냥. ✨"
-    ];
-    setDailyCatMessage(msgs[Math.floor(Math.random() * msgs.length)]);
-  }, [activeTab]);
-
-  // catMood 변경 시 해당 캐릭터의 전용 Lofi 음악으로 자동 전환
-  useEffect(() => {
-    const catMusic = CAT_CHARACTERS[catMood]?.lofiMusic;
-    if (catMusic) {
-      setCurrentMusic(catMusic);
-    }
-  }, [catMood]);
-
-  // OAuth 로그인 후 프로필 동기화
-  useEffect(() => {
-    if (isAuthenticated && profileQuery.data) {
-      const p = profileQuery.data;
-      if (p.nickname) setUserName(p.nickname);
-      if (p.catName) setCatName(p.catName);
-      if (p.catMood) setCatMood(p.catMood as MoodType);
-
-      if (p.isPremium) setIsPremium(!!p.isPremium);
-      if (authView === "landing") { setAuthView("app"); setIsTestCompleted(true); }
-    }
-  }, [isAuthenticated, profileQuery.data]);
-
-  useEffect(() => {
-    if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-
-
-  // 음악 재생
-  useEffect(() => {
-    audioRef.current = new Audio(currentMusic.url);
-    audioRef.current.loop = true;
-    audioRef.current.volume = 0.35;
-    if (isPlaying) audioRef.current.play().catch(() => setIsPlaying(false));
-    return () => { if (audioRef.current) audioRef.current.pause(); };
-  }, [currentMusic]);
+  const playMeow = () => {
+    const audio = new Audio("data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA==");
+    audio.play().catch(() => {});
+  };
 
   const toggleMusic = () => {
-    if (!audioRef.current) return;
-    if (isPlaying) { audioRef.current.pause(); setIsPlaying(false); toast.info("음악을 일시정지했다냥 🎵"); }
-    else { audioRef.current.play().then(() => { setIsPlaying(true); toast.success(`🎶 현재 재생중: ${currentMusic.title}`); }).catch(() => toast.error("음악 재생에 실패했다냥!")); }
-  };
-
-
-
-  // 심리테스트
-  const handleAnswerSelect = (score: Partial<Record<MoodType, number>>) => {
-    setTestScores(prev => {
-      const updated = { ...prev };
-      (Object.keys(score) as MoodType[]).forEach(key => { updated[key] = (updated[key] || 0) + (score[key] || 0); });
-      return updated;
-    });
-    const nextIndex = currentQuestionIndex + 1;
-    if (nextIndex < activeQuestions.length) {
-      setCurrentQuestionIndex(nextIndex);
-    } else {
-      let maxScore = -1;
-      let selectedCat: MoodType = "unfair";
-      (Object.keys(testScores) as MoodType[]).forEach(key => { if (testScores[key] > maxScore) { maxScore = testScores[key]; selectedCat = key; } });
-      setCatMood(selectedCat);
-      setIsTestCompleted(true);
-      // 심리테스트 결과 냥이를 도감에 추가
-      setCollectedCats(prev => prev.includes(selectedCat) ? prev : [...prev, selectedCat]);
-      setMessages([{ id: "m1", sender: "cat", text: `안녕 드림님! 나는 심리테스트로 매칭된 드림님의 평생 단짝 [${CAT_CHARACTERS[selectedCat].name}]이다냥! 오늘 하루는 어땠어냥? 🐾`, timestamp: "10:00" }]);
-      setBubbleText(`안녕 드림님! 나는 [${CAT_CHARACTERS[selectedCat].name}]이다냥!`);
-      if (isAuthenticated) updateProfileMutation.mutate({ catMood: selectedCat });
-      toast.success(`🎉 심리테스트 완료! [${CAT_CHARACTERS[selectedCat].name}]가 매칭되었다냥!`);
-      // 레벨 조건에 따른 추가 냥이 해금
-
+    setIsPlaying(!isPlaying);
+    if (!isPlaying) {
+      const catMusic = CAT_CHARACTERS[catMood].lofiMusic;
+      setCurrentMusicMood(catMood);
+      toast.success(`${catMusic.title} 재생 중...🎵`);
     }
   };
 
-  // AI 냥이와 대화하기 (GPT 연동)
-  const handleSendChat = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim()) return;
-    const userText = chatInput;
-    const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    setMessages(prev => [...prev, { id: Date.now().toString(), sender: "user", text: userText, timestamp: timeStr }]);
-    setChatInput("");
-
-
-    if (isAuthenticated) {
-      // 실제 AI 대화 (GPT)
-      try {
-        const result = await sendMessageMutation.mutateAsync({
-          message: userText,
-          catName,
-          catMood,
-          history: chatHistory.slice(-10)
-        });
-        const catReply = result.reply;
-        setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), sender: "cat", text: catReply, timestamp: timeStr }]);
-        setBubbleText(catReply);
-        setChatHistory(prev => [...prev, { role: "user", content: userText }, { role: "assistant", content: catReply }]);
-      } catch {
-        const fallback = `그렇구냥! [${CAT_CHARACTERS[catMood].name}]이는 드림님의 모든 이야기를 다 기억하고 싶다냥. 편하게 더 얘기해달라냥! 🐾`;
-        setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), sender: "cat", text: fallback, timestamp: timeStr }]);
-        setBubbleText(fallback);
+  const handleShare = async () => {
+    const text = `${userName}의 감정냥이는 ${CAT_CHARACTERS[catMood].name}다냥! 🐾 Mind Cat Diary에서 나만의 감정냥이를 만나보세요!`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "Mind Cat Diary", text });
+      } else {
+        await navigator.clipboard.writeText(text);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+        toast.success("공유 링크 복사됨냥!");
       }
-    } else {
-      // 비로그인 시 로컬 규칙 기반 대화
-      setTimeout(() => {
-        const lower = userText.toLowerCase();
-        let catReply = `그렇구냥! [${CAT_CHARACTERS[catMood].name}]이는 드림님의 모든 이야기를 다 기억하고 싶다냥. 🐾`;
-        if (lower.includes("안녕")) catReply = `안녕 드림님! [${CAT_CHARACTERS[catMood].name}]이 반갑게 손을 흔든다냥! ☀️`;
-        else if (lower.includes("슬퍼") || lower.includes("힘들")) catReply = `많이 힘들었겠다냥... 토닥토닥. 내가 곁에서 따뜻하게 안아줄 테니 걱정 말라냥 🐾❤️`;
-        else if (lower.includes("행복") || lower.includes("기뻐")) catReply = `우와냥! 드림님이 행복하다니 나도 꼬리가 살랑살랑 춤을 춘다냥! 🍎⚡`;
-        setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), sender: "cat", text: catReply, timestamp: timeStr }]);
-        setBubbleText(catReply);
-      }, 1000);
+    } catch (err) {
+      console.error("Share failed:", err);
     }
   };
 
-  // 일기 추가 (AI 솔루션 + Lofi 추천)
-  const handleAddEvent = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputTitle.trim()) { toast.error("일기 제목을 입력해 달라냥!"); return; }
+  const generateCalendarDays = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = 5; // 6월 (0-indexed)
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
 
-    let solution = "";
-    let musicRecommendation = LOFI_PLAYLIST.default.title;
-
-    if (isAuthenticated) {
-      try {
-        const result = await createDiaryMutation.mutateAsync({ date: selectedDateStr, title: inputTitle, mood: inputMood, thanks: inputThanks });
-        solution = result?.solution || "";
-        musicRecommendation = result?.musicRecommendation || LOFI_PLAYLIST.default.title;
-      } catch {
-        const fallback = generateDiarySolution(inputTitle, inputMood, inputThanks);
-        solution = fallback.tip;
-        musicRecommendation = LOFI_PLAYLIST[fallback.music]?.title || LOFI_PLAYLIST.default.title;
-      }
-    } else {
-      const fallback = generateDiarySolution(inputTitle, inputMood, inputThanks);
-      solution = fallback.tip;
-      musicRecommendation = LOFI_PLAYLIST[fallback.music]?.title || LOFI_PLAYLIST.default.title;
-
-    }
-
-    setLocalEvents(prev => [...prev, {
-      id: Date.now().toString(),
-      date: selectedDateStr,
-      title: inputTitle,
-      mood: inputMood,
-      thanks: inputThanks,
-      customSolution: solution,
-      customMusicRecommendation: musicRecommendation
-    }]);
-    setIsAddEventOpen(false);
-    setInputTitle("");
-    setInputThanks("");
-
-    // 감정에 맞는 음악 재생
-    const moodKey = Object.keys(LOFI_PLAYLIST).find(k => musicRecommendation.includes(k.split(" ")[0]));
-    const musicToPlay = moodKey ? LOFI_PLAYLIST[moodKey] : LOFI_PLAYLIST.default;
-    setCurrentMusic(musicToPlay);
-    toast.success(`🎵 일기에 어울리는 [${musicToPlay.title}]을 재생한다냥!`);
-  };
-
-  // 상점 아이템 구매
-
-
-  // 커뮤니티
-  const handleLikePost = (postId: string) => setFeedPosts(prev => prev.map(post => post.id === postId ? { ...post, likes: post.likedByMe ? post.likes - 1 : post.likes + 1, likedByMe: !post.likedByMe } : post));
-
-  // 코멘트 삭제 함수
-  const handleDeleteComment = (postId: string, commentId: string) => {
-    setFeedPosts(prev => prev.map(post => {
-      if (post.id !== postId) return post;
-      return { ...post, comments: post.comments.filter(c => c.id !== commentId) };
-    }));
-    toast.success("댓글을 삭제했다냥.");
-  };
-
-  // 피드 게시물 삭제 함수
-  const handleDeletePost = (postId: string) => {
-    setFeedPosts(prev => prev.filter(post => post.id !== postId));
-    toast.success("게시물을 삭제했다냥.");
-  };
-  const handleAddComment = (postId: string, text: string) => {
-    if (!text.trim()) return;
-    setFeedPosts(prev => prev.map(post => post.id === postId ? { ...post, comments: [...post.comments, { id: Date.now().toString(), author: userName, text: `${text}냥!`, date: "방금 전" }] } : post));
-  };
-  const handleCreatePost = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPostText.trim()) return;
-    setFeedPosts([{ id: Date.now().toString(), author: userName, avatar: CAT_CHARACTERS[catMood].image, content: `${newPostText}냥!`, likes: 0, likedByMe: false, comments: [], date: "방금 전" }, ...feedPosts]);
-    setNewPostText(""); setIsCommunityWriteOpen(false);
-    toast.success("마음 숲 피드에 글을 등록했다냥! 🌳📸");
-  };
-
-  // 달력 렌더링
-  const renderCalendarDays = () => {
-    const year = currentDate.getFullYear(), month = currentDate.getMonth();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const firstDayIndex = new Date(year, month, 1).getDay();
     const days = [];
-    for (let i = 0; i < firstDayIndex; i++) days.push(<div key={`e-${i}`} className="h-10"></div>);
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(<div key={`empty-${i}`} className="h-10"></div>);
+    }
+
     for (let day = 1; day <= daysInMonth; day++) {
       const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
       const isSelected = selectedDateStr === dateStr;
-      const hasEvent = localEvents.some(e => e.date === dateStr);
+      const hasEvent = diaries[dateStr] || scheduleEvents.some(e => e.date === dateStr);
       days.push(
         <button key={day} onClick={() => setSelectedDateStr(dateStr)} className={`h-10 w-full flex flex-col items-center justify-center rounded-lg transition-all relative ${isSelected ? "bg-blue-500 text-white font-bold" : "bg-white text-black hover:bg-gray-50"}`}>
           <span className="text-xs">{day}</span>
@@ -531,37 +292,110 @@ export default function Home() {
             <LogIn className="w-4 h-4" /> Manus 계정으로 로그인 (데이터 영구 저장)
           </button>
           <button onClick={() => setAuthView("signup")} className="w-full py-3 bg-white hover:bg-gray-50 text-gray-700 font-bold text-sm rounded-2xl border border-gray-200 transition-colors flex items-center justify-center gap-2">
-            <UserPlus className="w-4 h-4" /> 로그인 없이 무료로 시작하기냥 🐾
+            <UserPlus className="w-4 h-4" /> 일반 계정으로 가입하기냥 🐾
+          </button>
+          <button onClick={() => setAuthView("admin-login")} className="w-full py-3 bg-gray-800 hover:bg-gray-900 text-white font-bold text-sm rounded-2xl border border-gray-700 transition-colors flex items-center justify-center gap-2">
+            <Shield className="w-4 h-4" /> 관리자 로그인
           </button>
         </div>
       </div>
     );
   }
 
-  // === 회원가입 화면 ===
+  // === 관리자 로그인 화면 ===
+  if (authView === "admin-login") {
+    const [adminLoginUsername, setAdminLoginUsername] = useState("");
+    const [adminLoginPassword, setAdminLoginPassword] = useState("");
+    
+    return (
+      <div className="flex-1 flex flex-col bg-white h-full overflow-y-auto">
+        <div className="px-6 pt-10 pb-6 text-center space-y-3">
+          <div className="text-5xl mb-2">🛡️</div>
+          <h1 className="text-2xl font-black text-gray-800 tracking-tight">ADMIN LOGIN</h1>
+          <p className="text-sm text-gray-500 font-bold">Mind Cat Diary 관리자 로그인</p>
+        </div>
+        <div className="px-6 py-8 flex-1 flex flex-col justify-center space-y-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-600">관리자 사용자명</label>
+              <input type="text" value={adminLoginUsername} onChange={(e) => setAdminLoginUsername(e.target.value)} placeholder="사용자명 입력" className="w-full px-4 py-3 rounded-xl border border-gray-200 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-gray-800" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-600">비밀번호</label>
+              <input type="password" value={adminLoginPassword} onChange={(e) => setAdminLoginPassword(e.target.value)} placeholder="비밀번호 입력" className="w-full px-4 py-3 rounded-xl border border-gray-200 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-gray-800" />
+            </div>
+          </div>
+          <button onClick={() => {
+            if (adminLoginUsername === "admin" && adminLoginPassword === "123456") {
+              setIsAdminLoggedIn(true);
+              setAuthView("app");
+              setActiveTab("admin");
+              toast.success("관리자 로그인 성공! 🛡️");
+            } else {
+              toast.error("사용자명 또는 비밀번호가 틀렸다냥!");
+            }
+          }} className="w-full py-4 bg-gray-800 hover:bg-gray-900 text-white font-bold text-sm rounded-2xl transition-colors shadow-md">로그인
+          </button>
+        </div>
+        <div className="px-6 py-6">
+          <button onClick={() => setAuthView("landing")} className="w-full py-3 bg-white hover:bg-gray-50 text-gray-700 font-bold text-sm rounded-2xl border border-gray-200 transition-colors">돌아가기</button>
+        </div>
+      </div>
+    );
+  }
+
+  // === 일반 로그인/가입 화면 ===
   if (authView === "signup") {
     return (
       <div className="flex-1 flex flex-col bg-white h-full overflow-y-auto p-6">
         <button onClick={() => setAuthView("landing")} className="flex items-center gap-1 text-gray-400 text-xs font-bold mb-6"><ChevronLeft className="w-4 h-4" /> 돌아가기</button>
-        <div className="text-center space-y-2 mb-8"><div className="text-4xl">🐾</div><h2 className="text-xl font-black text-gray-800">나만의 감정냥이 만들기</h2><p className="text-xs text-gray-500 font-bold">닉네임과 고양이 이름을 설정하고 심리테스트를 시작하세요냥!</p></div>
-        <div className="space-y-5 flex-1">
-          <div className="space-y-1.5"><label className="text-xs font-black text-gray-600">나의 닉네임</label><input type="text" value={signupNickname} onChange={(e) => setSignupNickname(e.target.value)} placeholder="예: 드림님, 집사, 냥냥이..." className="w-full px-4 py-3 rounded-xl border border-gray-200 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
-          <div className="space-y-1.5"><label className="text-xs font-black text-gray-600">나의 감정냥이 이름</label><input type="text" value={signupCatName} onChange={(e) => setSignupCatName(e.target.value)} placeholder="예: 드림이, 뭉치, 나비..." className="w-full px-4 py-3 rounded-xl border border-gray-200 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
-          <div className="p-4 rounded-2xl bg-blue-50 border border-blue-100 space-y-2">
-            <h3 className="text-xs font-black text-blue-700">📋 시작 혜택</h3>
-            <ul className="text-[11px] text-blue-600 font-bold space-y-1">
-              <li>✅ 심리테스트로 나만의 감정냥이 매칭</li>
-              <li>✅ AI 냥이와 대화하기 이용</li>
-              <li>✅ 일기 작성 시 AI 맞춤 솔루션 & Lofi 음악 추천</li>
-              <li>✅ 사과 5개 시작 선물 🍎</li>
-            </ul>
-          </div>
-        </div>
-        <button onClick={() => {
-          if (!signupNickname.trim()) { toast.error("닉네임을 입력해달라냥!"); return; }
-          setUserName(signupNickname); setCatName(signupCatName); setAuthView("app"); setIsTestCompleted(false);
-          toast.success(`환영한다냥, ${signupNickname}님! 사과 🍎 5개를 선물로 드린다냥!`);
-        }} className="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm rounded-2xl transition-colors shadow-md mt-6">가입하고 심리테스트 시작하기냥 🐾</button>
+        
+        {!isLoginMode ? (
+          <>
+            <div className="text-center space-y-2 mb-8"><div className="text-4xl">🐾</div><h2 className="text-xl font-black text-gray-800">나만의 감정냥이 만들기</h2><p className="text-xs text-gray-500 font-bold">닉네임과 고양이 이름을 설정하고 심리테스트를 시작하세요냥!</p></div>
+            <div className="space-y-5 flex-1">
+              <div className="space-y-1.5"><label className="text-xs font-black text-gray-600">나의 닉네임</label><input type="text" value={signupNickname} onChange={(e) => setSignupNickname(e.target.value)} placeholder="예: 드림님, 집사, 냥냥이..." className="w-full px-4 py-3 rounded-xl border border-gray-200 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
+              <div className="space-y-1.5"><label className="text-xs font-black text-gray-600">나의 감정냥이 이름</label><input type="text" value={signupCatName} onChange={(e) => setSignupCatName(e.target.value)} placeholder="예: 드림이, 뭉치, 나비..." className="w-full px-4 py-3 rounded-xl border border-gray-200 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
+              <div className="space-y-1.5"><label className="text-xs font-black text-gray-600">사용자명 (로그인 시 사용)</label><input type="text" value={generalUsername} onChange={(e) => setGeneralUsername(e.target.value)} placeholder="로그인에 사용할 사용자명" className="w-full px-4 py-3 rounded-xl border border-gray-200 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
+              <div className="space-y-1.5"><label className="text-xs font-black text-gray-600">비밀번호</label><input type="password" value={generalPassword} onChange={(e) => setGeneralPassword(e.target.value)} placeholder="비밀번호 설정" className="w-full px-4 py-3 rounded-xl border border-gray-200 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
+              <div className="space-y-1.5"><label className="text-xs font-black text-gray-600">비밀번호 재입력</label><input type="password" value={generalPasswordConfirm} onChange={(e) => setGeneralPasswordConfirm(e.target.value)} placeholder="비밀번호 다시 입력" className="w-full px-4 py-3 rounded-xl border border-gray-200 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
+              <div className="p-4 rounded-2xl bg-blue-50 border border-blue-100 space-y-2">
+                <h3 className="text-xs font-black text-blue-700">📋 시작 혜택</h3>
+                <ul className="text-[11px] text-blue-600 font-bold space-y-1">
+                  <li>✅ 심리테스트로 나만의 감정냥이 매칭</li>
+                  <li>✅ AI 냥이와 대화하기 이용</li>
+                  <li>✅ 일기 작성 시 AI 맞춤 솔루션 & Lofi 음악 추천</li>
+                </ul>
+              </div>
+            </div>
+            <button onClick={() => {
+              if (!signupNickname.trim()) { toast.error("닉네임을 입력해달라냥!"); return; }
+              if (!generalUsername.trim()) { toast.error("사용자명을 입력해달라냥!"); return; }
+              if (!generalPassword.trim()) { toast.error("비밀번호를 입력해달라냥!"); return; }
+              if (generalPassword !== generalPasswordConfirm) { toast.error("비밀번호가 일치하지 않다냥!"); return; }
+              setUserName(signupNickname); setCatName(signupCatName); setAuthView("app"); setIsTestCompleted(false);
+              toast.success(`환영한다냥, ${signupNickname}님! 데이터는 로컬에 저장된다냥! 🐾`);
+            }} className="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm rounded-2xl transition-colors shadow-md mt-6">가입하기냥 🐾</button>
+            <button onClick={() => setIsLoginMode(true)} className="w-full py-3 bg-white hover:bg-gray-50 text-gray-700 font-bold text-sm rounded-2xl border border-gray-200 transition-colors mt-3">이미 가입한 계정으로 로그인</button>
+          </>
+        ) : (
+          <>
+            <div className="text-center space-y-2 mb-8"><div className="text-4xl">🐾</div><h2 className="text-xl font-black text-gray-800">로그인</h2><p className="text-xs text-gray-500 font-bold">기존 계정으로 로그인하세요냥</p></div>
+            <div className="space-y-5 flex-1">
+              <div className="space-y-1.5"><label className="text-xs font-black text-gray-600">사용자명</label><input type="text" value={generalUsername} onChange={(e) => setGeneralUsername(e.target.value)} placeholder="사용자명 입력" className="w-full px-4 py-3 rounded-xl border border-gray-200 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
+              <div className="space-y-1.5"><label className="text-xs font-black text-gray-600">비밀번호</label><input type="password" value={generalPassword} onChange={(e) => setGeneralPassword(e.target.value)} placeholder="비밀번호 입력" className="w-full px-4 py-3 rounded-xl border border-gray-200 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
+            </div>
+            <button onClick={() => {
+              if (!generalUsername.trim() || !generalPassword.trim()) { toast.error("사용자명과 비밀번호를 입력해달라냥!"); return; }
+              setUserName(generalUsername);
+              setAuthView("app");
+              setIsTestCompleted(false);
+              toast.success(`로그인 성공! 데이터는 로컬에 저장된다냥! 🐾`);
+            }} className="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm rounded-2xl transition-colors shadow-md mt-6">로그인
+            </button>
+            <button onClick={() => setIsLoginMode(false)} className="w-full py-3 bg-white hover:bg-gray-50 text-gray-700 font-bold text-sm rounded-2xl border border-gray-200 transition-colors mt-3">새 계정 만들기</button>
+          </>
+        )}
       </div>
     );
   }
@@ -595,8 +429,6 @@ export default function Home() {
   // === 메인 앱 ===
   return (
     <div className="flex-1 flex flex-col relative h-full bg-white font-sans overflow-hidden">
-
-
       {/* TOP BAR */}
       <header className="px-5 py-3.5 flex items-center justify-between border-b border-gray-100 bg-white z-10">
         <button onClick={() => setIsMailOpen(true)} className="p-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-100"><Mail className="w-4 h-4 text-gray-600" /></button>
@@ -627,6 +459,20 @@ export default function Home() {
         {/* 고양이 방 탭 */}
         {activeTab === "room" && (
           <div className="p-5 space-y-5 h-full flex flex-col justify-between min-h-[460px]">
+            {/* 게임 섹션 */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="border-2 border-blue-300 rounded-2xl p-4 bg-gradient-to-br from-blue-50 to-blue-100 text-center cursor-pointer hover:shadow-lg transition-all" onClick={() => adminSettings.gameLinks.mindBlock && window.open(adminSettings.gameLinks.mindBlock, '_blank')}>
+                <div className="text-4xl mb-2">🧠</div>
+                <h3 className="font-bold text-xs text-gray-800 mb-1">마인드 블럭</h3>
+                <p className="text-[8px] text-gray-600 font-bold">동동동 마을 단련다냥</p>
+              </div>
+              <div className="border-2 border-purple-300 rounded-2xl p-4 bg-gradient-to-br from-purple-50 to-purple-100 text-center cursor-pointer hover:shadow-lg transition-all" onClick={() => adminSettings.gameLinks.musicListen && window.open(adminSettings.gameLinks.musicListen, '_blank')}>
+                <div className="text-4xl mb-2">🎵</div>
+                <h3 className="font-bold text-xs text-gray-800 mb-1">나만의 감성 음악</h3>
+                <p className="text-[8px] text-gray-600 font-bold">로파이로 마음 다루다냥</p>
+              </div>
+            </div>
+            
             <div className="w-full flex justify-center">
               <div className="relative w-full max-w-[320px]">
                 <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-3.5 text-center font-bold text-xs text-blue-600 leading-relaxed relative shadow-sm" style={{opacity: '0'}}>
@@ -649,8 +495,6 @@ export default function Home() {
               </div>
             </div>
 
-
-
             <div className="flex gap-2 justify-center">
               <button onClick={() => { setActiveTab("chat"); setBubbleText("무슨 재밋는 이야기를 들려줄 거냥? 🐾"); }} className="flex items-center gap-1 px-4 py-3 bg-blue-500 text-white font-bold text-xs rounded-xl shadow-sm hover:bg-blue-600 transition-colors"><MessageSquare className="w-4 h-4" /> 대화하기</button>
               <button
@@ -664,626 +508,177 @@ export default function Home() {
           </div>
         )}
 
-        {/* 냥이와 대화하기 탭 */}
+        {/* 대화 탭 */}
         {activeTab === "chat" && (
-          <div className="absolute inset-0 bottom-20 bg-white flex flex-col z-20">
-            <div className="px-5 py-3 bg-blue-50 border-b border-blue-100 flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-white overflow-hidden flex items-center justify-center border border-blue-200">
-                  <img src={CAT_CHARACTERS[catMood].image} alt="Profile" className="w-7 h-7 object-contain" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-sm text-gray-800 flex items-center gap-1">
-                    {catName} <span className="text-[8px] bg-blue-500 text-white px-1.5 py-0.2 rounded">냥이와 대화하기</span>
-                    {isAuthenticated && <span className="text-[8px] bg-green-500 text-white px-1.5 py-0.2 rounded">GPT AI</span>}
-                  </h3>
-                  <p className="text-[10px] text-blue-500 font-bold">현재 매칭: {CAT_CHARACTERS[catMood].name}</p>
-                </div>
+          <div className="p-5 space-y-4 h-full flex flex-col">
+            <div className="flex-1 space-y-4 overflow-y-auto">
+              <div className="flex justify-center">
+                <div className="max-w-xs bg-blue-100 text-gray-800 p-4 rounded-2xl text-sm font-bold text-center shadow-sm">{bubbleText}</div>
               </div>
-              <button onClick={() => setActiveTab("room")} className="text-xs text-gray-500 hover:text-gray-700 font-bold bg-white px-2.5 py-1 rounded-lg border border-gray-150">방으로 가기</button>
             </div>
-            <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-[#F8FAFC]">
-              {messages.map((msg) => (
-                <div key={msg.id} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
-                  {msg.sender === "cat" && (
-                    <div className="w-8 h-8 rounded-full bg-white border border-gray-150 overflow-hidden flex items-center justify-center mr-2 mt-1 shrink-0 shadow-sm">
-                      <img src={CAT_CHARACTERS[catMood].image} alt="Cat" className="w-6 h-6 object-contain" />
-                    </div>
-                  )}
-                  <div className={`max-w-[75%] p-3.5 rounded-2xl font-bold text-xs leading-relaxed shadow-sm ${msg.sender === "user" ? "bg-gray-800 text-white rounded-tr-none" : "bg-white text-gray-700 border border-gray-100 rounded-tl-none"}`}>
-                    {msg.text}
-                    <div className={`text-[8px] mt-1 ${msg.sender === "user" ? "text-gray-400 text-right" : "text-gray-400"}`}>{msg.timestamp}</div>
-                  </div>
-                </div>
-              ))}
-              {sendMessageMutation.isPending && (
-                <div className="flex justify-start">
-                  <div className="w-8 h-8 rounded-full bg-white border border-gray-150 overflow-hidden flex items-center justify-center mr-2 mt-1 shrink-0">
-                    <img src={CAT_CHARACTERS[catMood].image} alt="Cat" className="w-6 h-6 object-contain" />
-                  </div>
-                  <div className="bg-white text-gray-400 border border-gray-100 rounded-2xl rounded-tl-none p-3.5 text-xs font-bold shadow-sm">
-                    <span className="animate-pulse">냥이가 생각 중이다냥... 🐾</span>
-                  </div>
-                </div>
-              )}
-              <div ref={chatEndRef} />
+            <div className="flex gap-2">
+              <input type="text" placeholder="냥이에게 말해주기..." className="flex-1 px-4 py-3 rounded-xl border border-gray-200 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <button className="p-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-colors"><Send className="w-4 h-4" /></button>
             </div>
-            <form onSubmit={handleSendChat} className="p-3 border-t border-gray-100 bg-white flex gap-2 shrink-0">
-              <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder={`${catName}이에게 속마음을 들려달라냥...`} className="flex-1 px-4 py-3 rounded-xl border border-gray-200 bg-white font-bold text-xs focus:outline-none focus:ring-1 focus:ring-blue-500" />
-              <button type="submit" disabled={sendMessageMutation.isPending} className="p-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-colors shadow-sm shrink-0 disabled:opacity-50"><Send className="w-4 h-4" /></button>
-            </form>
           </div>
         )}
 
         {/* 달력 탭 */}
         {activeTab === "calendar" && (
-          <div className="p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))} className="p-2 rounded-lg bg-gray-50 border border-gray-100"><ChevronLeft className="w-4 h-4 text-gray-600" /></button>
-              <h2 className="text-base font-bold text-gray-800">{currentDate.getFullYear()}년 {String(currentDate.getMonth() + 1).padStart(2, "0")}월</h2>
-              <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))} className="p-2 rounded-lg bg-gray-50 border border-gray-100"><ChevronRight className="w-4 h-4 text-gray-600" /></button>
-            </div>
-            <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold border-b border-gray-100 pb-1 text-gray-400">
-              <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
-            </div>
-            <div className="grid grid-cols-7 gap-1 text-center">{renderCalendarDays()}</div>
-            <div className="space-y-3 mt-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-xs text-gray-500">📅 {selectedDateStr} 기록</h3>
-                <button onClick={() => setIsAddEventOpen(true)} className="flex items-center gap-1 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-lg transition-colors shadow-sm"><Plus className="w-3 h-3" /> 일기 쓰기</button>
+          <div className="p-5 space-y-5 h-full overflow-y-auto">
+            <div className="text-center">
+              <h2 className="text-lg font-black text-gray-800 mb-4">2024년 6월</h2>
+              <div className="grid grid-cols-7 gap-2">
+                {["일", "월", "화", "수", "목", "금", "토"].map(day => (
+                  <div key={day} className="text-center text-xs font-bold text-gray-500 py-2">{day}</div>
+                ))}
+                {generateCalendarDays()}
               </div>
-              {localEvents.filter(e => e.date === selectedDateStr).length === 0 ? (
-                <div className="text-center py-8 border border-dashed border-gray-200 rounded-2xl bg-gray-50 p-4"><p className="text-xs font-bold text-gray-400">이날은 등록된 마음 일기가 없다냥.</p></div>
-              ) : (
-                localEvents.filter(e => e.date === selectedDateStr).map(event => {
-                  const solution = generateDiarySolution(event.title, event.mood, event.thanks || "");
-                  const aiSolution = event.customSolution || solution.tip;
-                  const musicRec = event.customMusicRecommendation || LOFI_PLAYLIST[solution.music]?.title || LOFI_PLAYLIST.default.title;
-                  return (
-                    <div key={event.id} className="border border-gray-100 rounded-2xl p-5 bg-white space-y-4 shadow-sm relative">
-                      <button onClick={() => { setLocalEvents(prev => prev.filter(e => e.id !== event.id)); toast.success("일기를 삭제했다냥."); }} className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
-                      <div className="space-y-1"><span className="text-[9px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-bold">오늘의 일기</span><h4 className="text-sm font-bold text-gray-800">{event.title}</h4></div>
-                      <div className="grid grid-cols-2 gap-3 border-t border-gray-50 pt-3">
-                        <div><span className="text-[9px] text-gray-400 font-bold">마음 날씨</span><p className="text-xs font-bold text-gray-700">{event.mood}</p></div>
-                        <div><span className="text-[9px] text-gray-400 font-bold">감사한 일</span><p className="text-xs font-bold text-gray-700">{event.thanks}</p></div>
-                      </div>
-                      <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-50/80 space-y-2.5">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[9px] bg-blue-500 text-white px-2 py-0.5 rounded font-bold">{isAuthenticated ? "🤖 AI 처방전" : "드림이의 처방전 🩺"}</span>
-                          <span className="text-[9px] bg-pink-100 text-pink-600 px-2 py-0.5 rounded font-bold">🎵 {musicRec}</span>
-                        </div>
-                        <p className="text-[11px] text-blue-600 font-bold leading-relaxed">{aiSolution}</p>
-                        {!event.customSolution && (
-                          <ul className="text-[11px] text-gray-600 font-bold space-y-1.5 list-disc pl-4 leading-relaxed">
-                            {solution.steps.map((step, idx) => <li key={idx}>{step}</li>)}
-                          </ul>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
             </div>
           </div>
         )}
 
         {/* 커뮤니티 탭 */}
         {activeTab === "community" && (
-          <div className="p-5 space-y-5">
-            <div className="flex items-center justify-between">
-              <div><h2 className="text-base font-bold text-gray-800">마음 숲 피드</h2><p className="text-xs text-gray-500">서로 위로를 나누는 따뜻한 커뮤니티냥 🌳</p></div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleShare("마음 숲 커뮤니티에서 감정냥이들과 소통하고 있다냥! 나만의 감정냥이를 만나고 매일 마음일기를 쓰면 AI가 힐링 솔루션을 줘준다냥! 🍎")}
-                  className="flex items-center gap-1 px-3 py-2 bg-pink-50 hover:bg-pink-100 text-pink-600 font-bold text-xs rounded-xl border border-pink-200 transition-colors"
-                >
-                  {isCopied ? <Check className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}
-                  공유
-                </button>
-                <button onClick={() => setIsCommunityWriteOpen(true)} className="flex items-center gap-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-xl transition-colors shadow-sm"><Plus className="w-4 h-4" /> 글쓰기</button>
-              </div>
+          <div className="p-5 space-y-4 h-full overflow-y-auto">
+            <div className="flex items-center gap-2 mb-4">
+              <h2 className="text-lg font-black text-gray-800">마음 숲</h2>
+              <button className="ml-auto p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-colors"><Plus className="w-4 h-4" /></button>
             </div>
-            <div className="space-y-4">
-              {feedPosts.map(post => (
-                <div key={post.id} className="border border-gray-100 rounded-2xl bg-white shadow-sm overflow-hidden">
-                  <div className="p-4 flex items-center gap-2.5 bg-gray-50/50 border-b border-gray-50">
-                    <div className="w-8 h-8 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center border border-gray-100 shrink-0"><img src={post.avatar} alt="Avatar" className="w-6 h-6 object-contain" /></div>
+            {feedPosts.map(post => (
+              <div key={post.id} className="p-4 rounded-xl bg-gray-50 border border-gray-100 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-blue-200 flex items-center justify-center text-xs font-bold">😊</div>
                     <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-xs text-gray-700">{post.author}</span>
+                      <p className="text-xs font-bold text-gray-800">{post.author}</p>
+                      <p className="text-[10px] text-gray-500">{new Date(post.date).toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-700 font-bold">{post.content}</p>
+                <div className="flex items-center gap-2">
+                  <button className="flex items-center gap-1 text-xs text-gray-500 hover:text-pink-500 transition-colors"><Heart className="w-3 h-3" /> {post.likes}</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
-                        {post.hasBestBadge && <span className="text-[8px] bg-amber-500 text-white px-1.5 py-0.2 rounded font-bold">👑 상담왕</span>}
-                      </div>
-                      <span className="text-[9px] text-gray-400 font-bold">{post.date}</span>
-                    </div>
-                  </div>
-                  <div className="p-4 border-b border-gray-50"><p className="text-xs font-bold text-gray-700 leading-relaxed">{post.content}</p></div>
-                  <div className="px-4 py-2.5 bg-gray-50/20 flex items-center gap-4 border-b border-gray-50">
-                    <button onClick={() => handleLikePost(post.id)} className={`flex items-center gap-1 text-xs font-bold transition-colors ${post.likedByMe ? "text-red-500" : "text-gray-500 hover:text-red-500"}`}><Heart className={`w-3.5 h-3.5 ${post.likedByMe ? "fill-current" : ""}`} /><span>{post.likes}</span></button>
-                    <div className="flex items-center gap-1 text-xs font-bold text-gray-500"><MessageCircle className="w-3.5 h-3.5" /><span>{post.comments.length}</span></div>
-                  </div>
-                  {post.comments.length > 0 && (
-                    <div className="p-4 bg-gray-50/30 space-y-2.5 border-b border-gray-50">
-                      {post.comments.map(comment => (
-                        <div key={comment.id} className="flex items-start justify-between gap-2 group">
-                          <div className="flex items-start gap-1.5 flex-1 min-w-0">
-                            <span className="text-gray-800 font-black text-xs shrink-0">{comment.author}:</span>
-                            <span className="text-gray-600 text-xs font-bold leading-relaxed break-words">{comment.text}</span>
-                          </div>
-                          {/* 내가 쒴 댓글이면 삭제 버튼 표시 */}
-                          {comment.author === userName && (
-                            <button
-                              onClick={() => handleDeleteComment(post.id, comment.id)}
-                              className="shrink-0 p-1 rounded-md text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
-                              title="댓글 삭제"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <div className="p-3 bg-white flex gap-2">
-                    <input type="text" placeholder="댓글을 달아달라냥..." onKeyDown={(e) => { if (e.key === 'Enter') { handleAddComment(post.id, (e.target as HTMLInputElement).value); (e.target as HTMLInputElement).value = ""; } }} className="flex-1 px-3 py-2 rounded-lg border border-gray-150 bg-white font-bold text-xs focus:outline-none" />
-                    <button onClick={(e) => { const input = (e.currentTarget.previousSibling as HTMLInputElement); handleAddComment(post.id, input.value); input.value = ""; }} className="px-3 bg-gray-800 text-white text-xs font-bold rounded-lg">등록</button>
-                  </div>
+        {/* 리포트 탭 */}
+        {activeTab === "report" && (
+          <div className="p-5 space-y-5 h-full overflow-y-auto">
+            <h2 className="text-lg font-black text-gray-800">월간 감정 분석</h2>
+            <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie data={[
+                    { name: "기쁨", value: 30, fill: "#60A5FA" },
+                    { name: "슬픔", value: 20, fill: "#93C5FD" },
+                    { name: "피곤", value: 25, fill: "#F9A8D4" },
+                    { name: "불안", value: 15, fill: "#FCA5A5" },
+                    { name: "외로움", value: 10, fill: "#C4B5FD" }
+                  ]} cx="50%" cy="50%" labelLine={false} label={({ name, value }) => `${name} ${value}%`} outerRadius={80} fill="#8884d8" dataKey="value">
+                    {[].map((entry, index) => <Cell key={`cell-${index}`} fill="#8884d8" />)}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            
+            {/* 상담 광고 섹션 */}
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-4 border-2 border-purple-200 text-center space-y-3">
+              <h3 className="font-bold text-sm text-gray-800">💬 {adminSettings.ads.bannerText}</h3>
+              <button onClick={() => window.open(adminSettings.ads.bannerLink, '_blank')} className="w-full py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold text-xs rounded-xl transition-colors">상담 예약하기</button>
+            </div>
+          </div>
+        )}
+
+        {/* 도감 탭 */}
+        {activeTab === "dex" && (
+          <div className="p-5 space-y-5 h-full overflow-y-auto">
+            <h2 className="text-lg font-black text-gray-800">감정냥이 도감</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {(Object.keys(CAT_CHARACTERS) as MoodType[]).map(mood => (
+                <div key={mood} className={`p-4 rounded-2xl border-2 text-center space-y-2 ${collectedCats.includes(mood) ? "bg-blue-50 border-blue-300" : "bg-gray-50 border-gray-200 opacity-50"}`}>
+                  <img src={CAT_CHARACTERS[mood].image} alt={CAT_CHARACTERS[mood].name} className="w-16 h-16 mx-auto object-contain" />
+                  <p className="text-xs font-bold text-gray-800">{CAT_CHARACTERS[mood].name}</p>
+                  {!collectedCats.includes(mood) && <p className="text-[9px] text-gray-500">미수집</p>}
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* 월간 감정 분석 리포트 탭 */}
-        {activeTab === "report" && (
-          <div className="p-5 space-y-5">
+        {/* 관리자 탭 */}
+        {activeTab === "admin" && isAdminLoggedIn && (
+          <div className="p-5 space-y-5 h-full overflow-y-auto">
             <div className="flex items-center justify-between">
-              <div><h2 className="text-base font-bold text-gray-800">월간 감정 리포트</h2><p className="text-xs text-gray-500">AI가 분석한 나의 감정 변화 추이냥 📊</p></div>
-              <div className="flex items-center gap-1">
-                <button onClick={() => { if (reportMonth === 1) { setReportMonth(12); setReportYear(y => y - 1); } else setReportMonth(m => m - 1); }} className="p-1 rounded-lg bg-gray-50 border border-gray-100"><ChevronLeft className="w-3 h-3 text-gray-600" /></button>
-                <span className="text-xs font-bold text-gray-600 px-1">{reportYear}.{String(reportMonth).padStart(2, "0")}</span>
-                <button onClick={() => { if (reportMonth === 12) { setReportMonth(1); setReportYear(y => y + 1); } else setReportMonth(m => m + 1); }} className="p-1 rounded-lg bg-gray-50 border border-gray-100"><ChevronRight className="w-3 h-3 text-gray-600" /></button>
+              <h2 className="text-lg font-black text-gray-800">🛡️ 관리자 대시보드</h2>
+              <button onClick={() => { setIsAdminLoggedIn(false); setActiveTab("room"); toast.success("관리자 로그아웃!"); }} className="text-xs font-bold text-gray-600 hover:text-red-600">로그아웃</button>
+            </div>
+
+            {/* 게임 링크 관리 */}
+            <div className="bg-blue-50 rounded-2xl p-4 border-2 border-blue-200 space-y-3">
+              <h3 className="font-bold text-sm text-gray-800">🎮 게임 링크 관리</h3>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-600">마인드 블럭 링크</label>
+                <input type="text" value={adminSettings.gameLinks.mindBlock} onChange={(e) => setAdminSettings({...adminSettings, gameLinks: {...adminSettings.gameLinks, mindBlock: e.target.value}})} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-600">음악 듣기 링크</label>
+                <input type="text" value={adminSettings.gameLinks.musicListen} onChange={(e) => setAdminSettings({...adminSettings, gameLinks: {...adminSettings.gameLinks, musicListen: e.target.value}})} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
             </div>
 
-            {!isAuthenticated ? (
-              <div className="text-center py-10 border border-dashed border-gray-200 rounded-2xl bg-gray-50 p-6 space-y-3">
-                <p className="text-sm font-bold text-gray-600">월간 감정 리포트는 로그인 후 이용 가능하다냥!</p>
-                <button onClick={() => window.location.href = getLoginUrl()} className="px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-xl transition-colors shadow-sm">Manus 로그인으로 데이터 저장하기냥</button>
+            {/* 광고 관리 */}
+            <div className="bg-purple-50 rounded-2xl p-4 border-2 border-purple-200 space-y-3">
+              <h3 className="font-bold text-sm text-gray-800">📢 광고 관리</h3>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-600">광고 배너 문구</label>
+                <input type="text" value={adminSettings.ads.bannerText} onChange={(e) => setAdminSettings({...adminSettings, ads: {...adminSettings.ads, bannerText: e.target.value}})} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-purple-500" />
               </div>
-            ) : reportQuery.isLoading ? (
-              <div className="text-center py-10"><p className="text-xs text-gray-400 font-bold animate-pulse">AI가 이번 달 감정을 분석 중이다냥... 🐾</p></div>
-            ) : reportQuery.data && reportQuery.data.totalDiaries > 0 ? (
-              <div className="space-y-5">
-                {/* 요약 카드 */}
-                <div className="p-4 rounded-2xl bg-blue-50 border border-blue-100 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[9px] bg-blue-500 text-white px-2 py-0.5 rounded font-bold">🤖 AI 월간 요약</span>
-                    <span className="text-[9px] text-gray-400 font-bold">총 {reportQuery.data.totalDiaries}개 일기 분석</span>
-                  </div>
-                  <p className="text-xs font-bold text-blue-700 leading-relaxed">{reportQuery.data.aiSummary || `이번 달 가장 많이 느낀 감정은 [${reportQuery.data.topMood}]이다냥! 꾸준히 마음을 기록하는 드림님이 정말 대단하다냥 🐾`}</p>
-                </div>
-
-                {/* 파이 차트 */}
-                <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm space-y-3">
-                  <h3 className="text-xs font-bold text-gray-700">감정 분포도</h3>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <PieChart>
-                      <Pie data={Object.entries(reportQuery.data.moodCounts).map(([name, value]) => ({ name, value }))} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
-                        {Object.entries(reportQuery.data.moodCounts).map(([name], index) => (
-                          <Cell key={`cell-${index}`} fill={MOOD_COLORS[name] || "#93C5FD"} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* 바 차트 */}
-                <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm space-y-3">
-                  <h3 className="text-xs font-bold text-gray-700">감정별 일기 수</h3>
-                  <ResponsiveContainer width="100%" height={150}>
-                    <BarChart data={Object.entries(reportQuery.data.moodCounts).map(([name, value]) => ({ name, value }))}>
-                      <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                      <YAxis tick={{ fontSize: 10 }} />
-                      <Tooltip />
-                      <Bar dataKey="value" fill="#60A5FA" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-600">광고 링크</label>
+                <input type="text" value={adminSettings.ads.bannerLink} onChange={(e) => setAdminSettings({...adminSettings, ads: {...adminSettings.ads, bannerLink: e.target.value}})} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-purple-500" />
               </div>
-            ) : (
-              <div className="text-center py-10 border border-dashed border-gray-200 rounded-2xl bg-gray-50 p-6">
-                <p className="text-xs font-bold text-gray-400">이번 달에 작성된 일기가 없다냥.</p>
-                <p className="text-[10px] text-gray-300 mt-1">달력 탭에서 일기를 작성하면 여기서 분석 결과를 볼 수 있다냥!</p>
+            </div>
+
+            {/* 페이지 이름 수정 */}
+            <div className="bg-green-50 rounded-2xl p-4 border-2 border-green-200 space-y-3">
+              <h3 className="font-bold text-sm text-gray-800">📝 페이지 이름 수정</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(adminSettings.pageNames).map(([key, value]) => (
+                  <div key={key} className="space-y-1">
+                    <label className="text-xs font-bold text-gray-600">{key}</label>
+                    <input type="text" value={value} onChange={(e) => setAdminSettings({...adminSettings, pageNames: {...adminSettings.pageNames, [key]: e.target.value}})} className="w-full px-2 py-1 rounded-lg border border-gray-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-green-500" />
+                  </div>
+                ))}
               </div>
-            )}
-          </div>
-        )}
+            </div>
 
-        {/* 도감 탭 */}
-        {activeTab === "dex" && (
-          <div className="absolute inset-0 bottom-20 z-20 overflow-hidden">
-            <Dex
-              collectedCats={collectedCats}
-              currentCatMood={catMood}
-              testCount={testCount}
-              onSetCat={(mood) => {
-                setCatMood(mood);
-                setBubbleText(`[${CAT_CHARACTERS[mood].name}]로 변경했다냥! 반갑다냥! 💕`);
-                setActiveTab("room");
-                toast.success(`[${CAT_CHARACTERS[mood].name}]를 방에 배치했다냥! 🐾`);
-              }}
-              onRetakeTest={() => {
-                // 3회 이상이면 사과 10개 차감 확인 모달 표시
-                if (testCount >= 2) {
-                  setIsTestPayConfirmOpen(true);
-                } else {
-                  // 무료 재도전 (0~2회)
-                  setTestCount(prev => prev + 1);
-                  setIsTestCompleted(false);
-                  setCurrentQuestionIndex(0);
-                  setTestScores({ unfair: 0, anxious: 0, lonely: 0, lethargic: 0, angry: 0, love: 0, shy: 0, shocked: 0, bored: 0, depressed: 0, excited: 0, scared: 0, proud: 0, curious: 0, guilty: 0, relaxed: 0 });
-                  const shuffled = [...QUESTION_BANK].sort(() => 0.5 - Math.random());
-                  setActiveQuestions(shuffled.slice(0, 10));
-                  toast.success(`심리테스트 재도전 시작! (${testCount + 1}회차) 이번엔 어떤 냥이가 나올까냥? 🐾`);
-                }
-              }}
-            />
-          </div>
-        )}
-
-        {/* 관리자 탭 */}
-        {activeTab === "admin" && (
-          <div className="p-5 space-y-5">
-            <div><h2 className="text-base font-bold text-gray-800">관리자 대시보드</h2><p className="text-xs text-gray-500">서비스 운영 현황 및 광고 링크 실시간 수정 패널냥 🛡️</p></div>
-            
-            {/* 게임 섹션 */}
-            {!isAdminLoggedIn && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="border-2 border-blue-300 rounded-2xl p-6 bg-gradient-to-br from-blue-50 to-blue-100 text-center cursor-pointer hover:shadow-lg transition-all">
-                  <div className="text-5xl mb-3">🧠</div>
-                  <h3 className="font-bold text-sm text-gray-800 mb-1">마인드 블럭</h3>
-                  <p className="text-[9px] text-gray-600 font-bold">동동동 마을 단련다냥 🌟</p>
-                  <button onClick={() => adminSettings.gameLinks.mindBlock && window.open(adminSettings.gameLinks.mindBlock, '_blank')} className="mt-3 w-full py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-lg">게임 시작</button>
-                </div>
-                <div className="border-2 border-purple-300 rounded-2xl p-6 bg-gradient-to-br from-purple-50 to-purple-100 text-center cursor-pointer hover:shadow-lg transition-all">
-                  <div className="text-5xl mb-3">🎵</div>
-                  <h3 className="font-bold text-sm text-gray-800 mb-1">음악 듯기</h3>
-                  <p className="text-[9px] text-gray-600 font-bold">로파이 음악으로 마음을 다루다냥 🎋</p>
-                  <button onClick={() => adminSettings.gameLinks.musicListen && window.open(adminSettings.gameLinks.musicListen, '_blank')} className="mt-3 w-full py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold text-xs rounded-lg">게임 시작</button>
-                </div>
+            {/* 비밀번호 변경 */}
+            <div className="bg-red-50 rounded-2xl p-4 border-2 border-red-200 space-y-3">
+              <h3 className="font-bold text-sm text-gray-800">🔐 비밀번호 변경</h3>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-600">새 비밀번호</label>
+                <input type="password" placeholder="새 비밀번호 입력" className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-red-500" />
               </div>
-            )}
-            {!isAdminLoggedIn ? (
-              <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm space-y-4">
-                <h3 className="font-bold text-xs text-gray-700">관리자 비밀번호를 입력해달라냥 (기본: 123456)</h3>
-                <input type="password" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="비밀번호 입력" className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 font-bold text-xs focus:outline-none" />
-                <button onClick={() => { if (adminPassword === ADMIN_PASSWORD) { setIsAdminLoggedIn(true); toast.success("관리자 권한으로 로그인했다냥! 🛡️"); } else toast.error("비밀번호가 틀렸다냥!"); }} className="w-full py-2.5 bg-gray-800 text-white font-bold text-xs rounded-xl">로그인</button>
-              </div>
-            ) : (
-              <div className="space-y-5">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="border border-gray-100 rounded-xl p-4 bg-gray-50 text-center"><span className="text-[9px] text-gray-400 font-bold">누적 가입자</span><p className="text-base font-black text-gray-800 mt-1">1,248명</p></div>
-                  <div className="border border-gray-100 rounded-xl p-4 bg-gray-50 text-center"><span className="text-[9px] text-gray-400 font-bold">오늘 작성 일기</span><p className="text-base font-black text-gray-800 mt-1">342개</p></div>
-                </div>
-                <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm space-y-4">
-                  <h3 className="font-bold text-xs text-gray-800 border-b border-gray-50 pb-2">👥 회원 목록</h3>
-                  <div className="space-y-2">
-                    {[{ name: "드림님", level: 3, cat: "억울냥", joinDate: "2026-05-01", premium: true }, { name: "냥이집사3호", level: 5, cat: "사랑냥", joinDate: "2026-04-15", premium: false }, { name: "행복한하루", level: 2, cat: "외롭냥", joinDate: "2026-05-20", premium: false }].map((member, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100">
-                        <div>
-                          <div className="flex items-center gap-1.5"><span className="text-xs font-bold text-gray-700">{member.name}</span>{member.premium && <span className="text-[8px] bg-amber-500 text-white px-1 py-0.2 rounded font-bold">👑</span>}</div>
-                          <span className="text-[9px] text-gray-400 font-bold">Lv.{member.level} · {member.cat} · 가입: {member.joinDate}</span>
-                        </div>
-                        <span className="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold">활성</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm space-y-4">
-                  <h3 className="font-bold text-xs text-gray-800 border-b border-gray-50 pb-2">📢 광고 배너 실시간 관리</h3>
-                  <div className="space-y-3">
-                    <div className="space-y-1"><label className="text-[10px] font-bold text-gray-400">광고 배너 문구</label><input type="text" value={adText} onChange={(e) => setAdText(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 font-bold text-xs" /></div>
-                    <div className="space-y-1"><label className="text-[10px] font-bold text-gray-400">광고 아웃링크 URL</label><input type="text" value={adLink} onChange={(e) => setAdLink(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 font-bold text-xs" /></div>
-                    <button onClick={() => toast.success("광고 배너 설정이 실시간 반영되었다냥! 🍎")} className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-lg">광고 배너 업데이트</button>
-                  </div>
-                </div>
-                {/* 게임 링크 관리 */}
-                <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm space-y-4">
-                  <h3 className="font-bold text-xs text-gray-800 border-b border-gray-50 pb-2">🎮 게임 링크 관리</h3>
-                  <div className="space-y-3">
-                    <div className="space-y-1"><label className="text-[10px] font-bold text-gray-400">마인드 블럭 링크</label><input type="text" value={adminSettings.gameLinks.mindBlock} onChange={(e) => setAdminSettings({...adminSettings, gameLinks: {...adminSettings.gameLinks, mindBlock: e.target.value}})} placeholder="https://example.com/mind-block" className="w-full px-3 py-2 rounded-lg border border-gray-200 font-bold text-xs" /></div>
-                    <div className="space-y-1"><label className="text-[10px] font-bold text-gray-400">음악듣기 링크</label><input type="text" value={adminSettings.gameLinks.musicListen} onChange={(e) => setAdminSettings({...adminSettings, gameLinks: {...adminSettings.gameLinks, musicListen: e.target.value}})} placeholder="https://example.com/music-listen" className="w-full px-3 py-2 rounded-lg border border-gray-200 font-bold text-xs" /></div>
-                    <button onClick={() => toast.success("게임 링크가 업데이트되었다냥! 🎮")} className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-lg">게임 링크 업데이트</button>
-                  </div>
-                </div>
-
-                {/* 페이지 이름 수정 */}
-                <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm space-y-4">
-                  <h3 className="font-bold text-xs text-gray-800 border-b border-gray-50 pb-2">📝 모든 페이지 이름 수정</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1"><label className="text-[9px] font-bold text-gray-400">홈</label><input type="text" value={adminSettings.pageNames.home} onChange={(e) => setAdminSettings({...adminSettings, pageNames: {...adminSettings.pageNames, home: e.target.value}})} className="w-full px-2 py-1 rounded-lg border border-gray-200 font-bold text-xs" /></div>
-                    <div className="space-y-1"><label className="text-[9px] font-bold text-gray-400">대화</label><input type="text" value={adminSettings.pageNames.chat} onChange={(e) => setAdminSettings({...adminSettings, pageNames: {...adminSettings.pageNames, chat: e.target.value}})} className="w-full px-2 py-1 rounded-lg border border-gray-200 font-bold text-xs" /></div>
-                    <div className="space-y-1"><label className="text-[9px] font-bold text-gray-400">일기</label><input type="text" value={adminSettings.pageNames.diary} onChange={(e) => setAdminSettings({...adminSettings, pageNames: {...adminSettings.pageNames, diary: e.target.value}})} className="w-full px-2 py-1 rounded-lg border border-gray-200 font-bold text-xs" /></div>
-                    <div className="space-y-1"><label className="text-[9px] font-bold text-gray-400">달력</label><input type="text" value={adminSettings.pageNames.calendar} onChange={(e) => setAdminSettings({...adminSettings, pageNames: {...adminSettings.pageNames, calendar: e.target.value}})} className="w-full px-2 py-1 rounded-lg border border-gray-200 font-bold text-xs" /></div>
-                    <div className="space-y-1"><label className="text-[9px] font-bold text-gray-400">마음 숬</label><input type="text" value={adminSettings.pageNames.community} onChange={(e) => setAdminSettings({...adminSettings, pageNames: {...adminSettings.pageNames, community: e.target.value}})} className="w-full px-2 py-1 rounded-lg border border-gray-200 font-bold text-xs" /></div>
-                    <div className="space-y-1"><label className="text-[9px] font-bold text-gray-400">리포트</label><input type="text" value={adminSettings.pageNames.report} onChange={(e) => setAdminSettings({...adminSettings, pageNames: {...adminSettings.pageNames, report: e.target.value}})} className="w-full px-2 py-1 rounded-lg border border-gray-200 font-bold text-xs" /></div>
-                  </div>
-                  <button onClick={() => toast.success("페이지 이름이 업데이트되었다냥! 📝")} className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-lg">페이지 이름 업데이트</button>
-                </div>
-
-                {/* 관리자 비밀번호 변경 */}
-                <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm space-y-4">
-                  <h3 className="font-bold text-xs text-gray-800 border-b border-gray-50 pb-2">🔐 관리자 비밀번호 변경</h3>
-                  <div className="space-y-3">
-                    <div className="space-y-1"><label className="text-[10px] font-bold text-gray-400">새 비밀번호</label><input type="password" value={newAdminPassword} onChange={(e) => setNewAdminPassword(e.target.value)} placeholder="새 비밀번호 입력" className="w-full px-3 py-2 rounded-lg border border-gray-200 font-bold text-xs" /></div>
-                    <div className="space-y-1"><label className="text-[10px] font-bold text-gray-400">비밀번호 재입력</label><input type="password" value={confirmAdminPassword} onChange={(e) => setConfirmAdminPassword(e.target.value)} placeholder="비밀번호 다시 입력" className="w-full px-3 py-2 rounded-lg border border-gray-200 font-bold text-xs" /></div>
-                    <button onClick={() => { if (newAdminPassword && newAdminPassword === confirmAdminPassword) { toast.success("비밀번호가 변경되었다냥! 🔐"); setNewAdminPassword(""); setConfirmAdminPassword(""); } else toast.error("비밀번호가 일치하지 않다냥!"); }} className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-lg">비밀번호 변경</button>
-                  </div>
-                </div>
-
-                <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm space-y-4">
-                  <h3 className="font-bold text-xs text-gray-800 border-b border-gray-50 pb-2 flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-blue-500" /> 테스트 전용 제어기</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button onClick={() => { setLocalEvents([]); toast.success("모든 일정이 초기화되었다냥."); }} className="py-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs rounded-lg">🧹 일정 초기화</button>
-                    <button onClick={() => { setIsAdminLoggedIn(false); setAdminPassword(""); toast.info("로그아웃했다냥."); }} className="py-2 bg-gray-100 text-gray-600 font-bold text-xs rounded-lg">🚪 로그아웃</button>
-                  </div>
-                </div>
-              </div>
-            )}
+              <button className="w-full py-2 bg-red-500 hover:bg-red-600 text-white font-bold text-xs rounded-lg transition-colors">비밀번호 변경</button>
+            </div>
           </div>
         )}
       </main>
 
-      {/* 하단 광고 배너 */}
-      <div className="absolute bottom-20 left-0 right-0 h-12 bg-gray-50 border-t border-b border-gray-100 px-5 flex items-center justify-between z-10">
-        <div className="flex items-center gap-2"><span className="text-[8px] bg-gray-300 text-gray-600 px-1 rounded font-bold">AD</span><span className="text-[10px] font-bold text-gray-500 truncate max-w-[220px]">{adText}</span></div>
-        <a href={adLink} target="_blank" rel="noreferrer" className="text-[9px] text-blue-500 font-bold flex items-center gap-0.5 hover:underline shrink-0">바로가기 <ExternalLink className="w-2.5 h-2.5" /></a>
-      </div>
-
-      {/* 하단 네비게이션 (7탭) */}
-      <nav className="absolute bottom-0 left-0 right-0 h-20 bg-white border-t border-gray-100 z-10 shadow-lg flex items-end justify-around px-2 pb-2">
-        {/* 채팅 */}
-        <button onClick={() => setActiveTab("chat")} className={`flex flex-col items-center justify-center gap-0.5 w-10 h-12 rounded-xl transition-all ${activeTab === "chat" ? "text-blue-500" : "text-gray-400"}`}>
-          <MessageSquare className="w-5 h-5" />
-          <span className="text-[8px] font-bold">대화</span>
-        </button>
-        {/* 달력 */}
-        <button onClick={() => setActiveTab("calendar")} className={`flex flex-col items-center justify-center gap-0.5 w-10 h-12 rounded-xl transition-all ${activeTab === "calendar" ? "text-blue-500" : "text-gray-400"}`}>
-          <CalendarIcon className="w-5 h-5" />
-          <span className="text-[8px] font-bold">달력</span>
-        </button>
-        {/* 커뮤니티 */}
-        <button onClick={() => setActiveTab("community")} className={`flex flex-col items-center justify-center gap-0.5 w-10 h-12 rounded-xl transition-all ${activeTab === "community" ? "text-blue-500" : "text-gray-400"}`}>
-          <Users className="w-5 h-5" />
-          <span className="text-[8px] font-bold">커뮤니티</span>
-        </button>
-        {/* 고양이 방 (중앙 강조) */}
-        <button onClick={() => setActiveTab("room")} className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl -translate-y-3 transition-all shadow-md shrink-0 ${activeTab === "room" ? "bg-blue-500 text-white" : "bg-gray-50 text-gray-400 border border-gray-200"}`}>
-          <img src={CAT_CHARACTERS[catMood].image} alt="Cat Icon" className="w-9 h-9 object-contain" />
-        </button>
-        {/* 도감 */}
-        <button onClick={() => setActiveTab("dex")} className={`flex flex-col items-center justify-center gap-0.5 w-10 h-12 rounded-xl transition-all relative ${activeTab === "dex" ? "text-blue-500" : "text-gray-400"}`}>
-          <BookOpen className="w-5 h-5" />
-          <span className="text-[8px] font-bold">도감</span>
-          <span className="absolute top-0.5 right-0.5 bg-blue-500 text-white text-[7px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center">
-            {collectedCats.length}
-          </span>
-        </button>
-        {/* 리포트 */}
-        <button onClick={() => setActiveTab("report")} className={`flex flex-col items-center justify-center gap-0.5 w-10 h-12 rounded-xl transition-all ${activeTab === "report" ? "text-blue-500" : "text-gray-400"}`}>
-          <BarChart2 className="w-5 h-5" />
-          <span className="text-[8px] font-bold">리포트</span>
-        </button>
-        {/* 관리자 */}
-        <button onClick={() => setActiveTab("admin")} className={`flex flex-col items-center justify-center gap-0.5 w-10 h-12 rounded-xl transition-all ${activeTab === "admin" ? "text-blue-500" : "text-gray-400"}`}>
-          <Shield className="w-5 h-5" />
-          <span className="text-[8px] font-bold">관리자</span>
-        </button>
+      {/* BOTTOM NAV */}
+      <nav className="fixed bottom-0 left-0 right-0 px-5 py-3 bg-white border-t border-gray-100 flex gap-2 justify-between z-20">
+        <button onClick={() => setActiveTab("room")} className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all ${activeTab === "room" ? "bg-blue-500 text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"}`}>🏠 홈</button>
+        <button onClick={() => setActiveTab("chat")} className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all ${activeTab === "chat" ? "bg-blue-500 text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"}`}>💬 대화</button>
+        <button onClick={() => setActiveTab("calendar")} className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all ${activeTab === "calendar" ? "bg-blue-500 text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"}`}>📅 달력</button>
+        <button onClick={() => setActiveTab("community")} className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all ${activeTab === "community" ? "bg-blue-500 text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"}`}>🌳 마음숲</button>
+        <button onClick={() => setActiveTab("report")} className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all ${activeTab === "report" ? "bg-blue-500 text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"}`}>📊 리포트</button>
+        <button onClick={() => setActiveTab("dex")} className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all ${activeTab === "dex" ? "bg-blue-500 text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"}`}>📖 도감</button>
       </nav>
-
-      {/* MODAL: Stripe 결제 상점 */}
-
-
-      {/* MODAL: 우편함 */}
-      {isMailOpen && (
-        <div className="absolute inset-0 bg-black/30 z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-[340px] bg-white rounded-3xl p-6 space-y-4 border border-gray-100 shadow-xl">
-            <div className="flex items-center justify-between"><h3 className="text-sm font-bold text-gray-800">우편함</h3><button onClick={() => setIsMailOpen(false)} className="p-1 rounded-lg hover:bg-gray-50"><X className="w-4 h-4 text-gray-400" /></button></div>
-            <div className="rounded-2xl p-4 bg-blue-50/50 border border-blue-50">
-              <div className="flex items-center gap-1.5 mb-1.5"><span className="text-[9px] bg-blue-500 text-white px-1.5 py-0.2 rounded font-bold">새 소식</span><span className="text-[10px] font-bold text-gray-400">2026-05-30</span></div>
-              <h4 className="font-bold text-xs text-gray-700 mb-1">{catName}이가 보내는 첫 편지 💌</h4>
-              <p className="text-[11px] font-bold text-gray-600 leading-relaxed">"드림님! 나와 함께 심리테스트를 마치고 매일 감정을 나누어 줘서 고맙다냥. 기쁠 때나 슬플 때나 난 언제나 당신 편이다냥! 🐾❤️"</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: 설정 */}
-      {isSettingsOpen && (
-        <div className="absolute inset-0 bg-black/30 z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-[340px] bg-white rounded-3xl p-6 space-y-4 border border-gray-100 shadow-xl">
-            <div className="flex items-center justify-between"><h3 className="text-sm font-bold text-gray-800">설정</h3><button onClick={() => setIsSettingsOpen(false)} className="p-1 rounded-lg hover:bg-gray-50"><X className="w-4 h-4" /></button></div>
-            <div className="space-y-4">
-              <div className="space-y-1"><label className="text-[10px] font-bold text-gray-400">고양이 이름</label><input type="text" value={catName} onChange={(e) => setCatName(e.target.value)} className="w-full px-3.5 py-2 rounded-xl border border-gray-200 font-bold text-xs" /></div>
-              <div className="space-y-1"><label className="text-[10px] font-bold text-gray-400">사용자 닉네임</label><input type="text" value={userName} onChange={(e) => setUserName(e.target.value)} className="w-full px-3.5 py-2 rounded-xl border border-gray-200 font-bold text-xs" /></div>
-              <button onClick={() => { setIsSettingsOpen(false); if (isAuthenticated) updateProfileMutation.mutate({ nickname: userName, catName }); toast.success("설정이 저장되었습니다냥! 🐾"); }} className="w-full py-2.5 bg-gray-800 hover:bg-gray-700 text-white font-bold text-xs rounded-xl">설정 완료</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: 일기 작성 */}
-      {isAddEventOpen && (
-        <div className="absolute inset-0 bg-black/30 z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-[340px] bg-white rounded-3xl p-5 space-y-4 border border-gray-100 shadow-xl">
-            <div className="flex items-center justify-between border-b border-gray-50 pb-2"><h3 className="text-xs font-bold text-gray-700">마음 일기 작성 {isAuthenticated && <span className="text-[8px] bg-green-500 text-white px-1 rounded ml-1">AI 솔루션 자동 생성</span>}</h3><button onClick={() => setIsAddEventOpen(false)} className="p-1 rounded-lg hover:bg-gray-50"><X className="w-4 h-4 text-gray-400" /></button></div>
-            <form onSubmit={handleAddEvent} className="space-y-3.5">
-              <div className="space-y-1"><label className="text-[10px] font-bold text-gray-400">날짜</label><input type="text" value={selectedDateStr} disabled className="w-full px-3 py-2 bg-gray-50 rounded-xl border border-gray-100 font-bold text-xs text-gray-500" /></div>
-              <div className="space-y-1"><label className="text-[10px] font-bold text-gray-400">일기 제목</label><input type="text" value={inputTitle} onChange={(e) => setInputTitle(e.target.value)} placeholder="예: 오늘 중요한 발표를 끝냈다!" className="w-full px-3 py-2 rounded-xl border border-gray-200 font-bold text-xs focus:outline-none focus:ring-1 focus:ring-blue-500" /></div>
-              <div className="space-y-1"><label className="text-[10px] font-bold text-gray-400">오늘의 핵심 감정</label><select value={inputMood} onChange={(e) => setInputMood(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-gray-200 font-bold text-xs focus:outline-none"><option>기쁨 😊</option><option>슬픔 😢</option><option>피곤 😴</option><option>불안 😰</option><option>외로움 🥺</option></select></div>
-              <div className="space-y-1"><label className="text-[10px] font-bold text-gray-400">오늘 하루 감사했던 일</label><textarea value={inputThanks} onChange={(e) => setInputThanks(e.target.value)} placeholder="아무리 작은 일이라도 감사함을 느껴보라냥..." rows={2} className="w-full px-3 py-2 rounded-xl border border-gray-200 font-bold text-xs focus:outline-none resize-none" /></div>
-              <button type="submit" disabled={createDiaryMutation.isPending} className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-xl transition-colors shadow-sm disabled:opacity-50">{createDiaryMutation.isPending ? "AI가 솔루션을 생성 중이다냥... 🤖" : "일기 쓰고 AI 맞춤 해결책 & 음악 받기냥 🐾"}</button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: 커뮤니티 글쓰기 */}
-      {isCommunityWriteOpen && (
-        <div className="absolute inset-0 bg-black/30 z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-[340px] bg-white rounded-3xl p-5 space-y-4 border border-gray-100 shadow-xl">
-            <div className="flex items-center justify-between border-b border-gray-50 pb-2"><h3 className="text-xs font-bold text-gray-700">새 피드 작성</h3><button onClick={() => setIsCommunityWriteOpen(false)} className="p-1 rounded-lg hover:bg-gray-50"><X className="w-4 h-4 text-gray-400" /></button></div>
-            <form onSubmit={handleCreatePost} className="space-y-3.5">
-              <textarea value={newPostText} onChange={(e) => setNewPostText(e.target.value)} placeholder="마음 숲의 다른 집사들과 나누고 싶은 감정을 적어달라냥..." rows={4} className="w-full px-3 py-2 rounded-xl border border-gray-200 font-bold text-xs focus:outline-none resize-none" />
-              <button type="submit" className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-xl transition-colors shadow-sm">피드 올리기냥 📸🐾</button>
-            </form>
-          </div>
-        </div>
-      )}
-
-
-
-      {/* MODAL: 심리테스트 재도전 */}
-      {isTestPayConfirmOpen && (
-        <div className="absolute inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-[320px] bg-white rounded-3xl p-6 text-center space-y-4 border border-gray-100 shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="text-4xl">🐾</div>
-            <h3 className="text-base font-black text-gray-800">심리테스트 재도전</h3>
-            <p className="text-xs font-bold text-gray-600 leading-relaxed">마음을 다시 알아보기 위한 심리테스트를 다시 진행하다냥!</p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setIsTestPayConfirmOpen(false)}
-                className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold text-xs rounded-xl transition-colors"
-              >
-                취소
-              </button>
-              <button
-                onClick={() => {
-                  setTestCount(prev => prev + 1);
-                  setIsTestPayConfirmOpen(false);
-                  setIsTestCompleted(false);
-                  setCurrentQuestionIndex(0);
-                  setTestScores({ unfair: 0, anxious: 0, lonely: 0, lethargic: 0, angry: 0, love: 0, shy: 0, shocked: 0, bored: 0, depressed: 0, excited: 0, scared: 0, proud: 0, curious: 0, guilty: 0, relaxed: 0 });
-                  const shuffled = [...QUESTION_BANK].sort(() => 0.5 - Math.random());
-                  setActiveQuestions(shuffled.slice(0, 10));
-                  toast.success(`심리테스트 재도전 시작! (${testCount + 1}회차) 이번날단 어떤 냥이 나올까냥? 🐾`);
-                }}
-                className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-xl transition-colors shadow-sm"
-              >
-                시작!
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: 온보딩 튜토리얼 */}
-      {isOnboardingOpen && (
-        <div className="absolute inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
-          <div className="w-full max-w-[340px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-200">
-            
-            {/* 헤더 진행 바 */}
-            <div className="px-5 pt-5 pb-3">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-1.5">
-                  {ONBOARDING_STEPS.map((_, idx) => (
-                    <div
-                      key={idx}
-                      className={`h-1.5 rounded-full transition-all duration-300 ${
-                        idx === onboardingStep
-                          ? "w-6 bg-blue-500"
-                          : idx < onboardingStep
-                          ? "w-3 bg-blue-200"
-                          : "w-3 bg-gray-200"
-                      }`}
-                    />
-                  ))}
-                </div>
-                <span className="text-[10px] font-bold text-gray-400">
-                  {onboardingStep + 1}/{ONBOARDING_STEPS.length}
-                </span>
-              </div>
-            </div>
-
-            {/* 콘텐츠 영역 */}
-            <div className="px-5 pb-5 space-y-4">
-              {/* 이모지 및 제목 */}
-              <div className="text-center space-y-2">
-                <div className="text-5xl">{ONBOARDING_STEPS[onboardingStep].emoji}</div>
-                <h3 className="text-base font-black text-gray-800 leading-snug">
-                  {ONBOARDING_STEPS[onboardingStep].title}
-                </h3>
-              </div>
-
-              {/* 설명 텍스트 */}
-              <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
-                <p className="text-xs font-bold text-gray-600 leading-relaxed text-center">
-                  {ONBOARDING_STEPS[onboardingStep].desc}
-                </p>
-              </div>
-
-              {/* 하단 네비게이션 강조 표시 (해당 단계에만) */}
-              {ONBOARDING_STEPS[onboardingStep].highlight && (
-                <div className="flex items-center justify-center gap-2 p-2.5 bg-blue-50 rounded-xl border border-blue-100">
-                  <span className="text-[10px] font-bold text-blue-600">
-                    하단 네비게이션에서
-                  </span>
-                  <span className="bg-blue-500 text-white text-[10px] font-black px-2.5 py-1 rounded-full">
-                    {ONBOARDING_STEPS[onboardingStep].highlight}
-                  </span>
-                  <span className="text-[10px] font-bold text-blue-600">를 눌러보라냥!</span>
-                </div>
-              )}
-
-              {/* 버튼 그룹 */}
-              <div className="flex gap-2 pt-1">
-                {onboardingStep > 0 && (
-                  <button
-                    onClick={() => setOnboardingStep(prev => prev - 1)}
-                    className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold text-xs rounded-xl transition-colors"
-                  >
-                    ← 이전
-                  </button>
-                )}
-                {onboardingStep < ONBOARDING_STEPS.length - 1 ? (
-                  <button
-                    onClick={() => setOnboardingStep(prev => prev + 1)}
-                    className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-xl transition-colors shadow-sm"
-                  >
-                    다음 →
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      localStorage.setItem("mindcat-onboarding-seen", "true");
-                      setIsOnboardingOpen(false);
-                      setOnboardingStep(0);
-                      toast.success("튜토리얼 완료! 이제 나만의 감정냥이를 만나보라냥 🐾");
-                    }}
-                    className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-xl transition-colors shadow-sm"
-                  >
-                    시작하기냥! 🐾
-                  </button>
-                )}
-              </div>
-
-              {/* 다시 보지 않기 */}
-              <button
-                onClick={() => {
-                  localStorage.setItem("mindcat-onboarding-seen", "true");
-                  setIsOnboardingOpen(false);
-                  setOnboardingStep(0);
-                }}
-                className="w-full text-center text-[10px] text-gray-400 hover:text-gray-600 font-bold transition-colors"
-              >
-                건너뛰기 (다시 보지 않음)
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
