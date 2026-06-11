@@ -983,17 +983,22 @@ export default function Home() {
 
       {/* BOTTOM NAV */}
       <nav className="px-3 py-2.5 bg-white border-t border-gray-100 flex gap-1 justify-between shrink-0">
-        {[
-          { tab: "room", label: "🏠 홈" },
-          { tab: "chat", label: "💬 대화" },
-          { tab: "calendar", label: "📅 달력" },
-          { tab: "community", label: "🌳 마음숲" },
-          { tab: "report", label: "📊 리포트" },
-          { tab: "dex", label: "📖 도감" },
-          ...(isAdminLoggedIn ? [{ tab: "admin", label: "🛡️ 관리" }] : [])
-        ].map(({ tab, label }) => (
-          <button key={tab} onClick={() => setActiveTab(tab as typeof activeTab)} className={`flex-1 py-2.5 rounded-xl font-bold text-[10px] transition-all ${activeTab === tab ? "bg-blue-500 text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"}`}>{label}</button>
-        ))}
+        {isAdminLoggedIn ? (
+          // 관리자 로그인 시: 관리자 탭만 표시
+          <button onClick={() => setActiveTab("admin")} className={`flex-1 py-2.5 rounded-xl font-bold text-[10px] transition-all ${activeTab === "admin" ? "bg-blue-500 text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"}`}>🛡️ 관리자</button>
+        ) : (
+          // 일반 로그인 시: 기존 탭 모두 표시
+          [
+            { tab: "room", label: "🏠 홈" },
+            { tab: "chat", label: "💬 대화" },
+            { tab: "calendar", label: "📅 달력" },
+            { tab: "community", label: "🌳 마음숲" },
+            { tab: "report", label: "📊 리포트" },
+            { tab: "dex", label: "📖 도감" },
+          ].map(({ tab, label }) => (
+            <button key={tab} onClick={() => setActiveTab(tab as typeof activeTab)} className={`flex-1 py-2.5 rounded-xl font-bold text-[10px] transition-all ${activeTab === tab ? "bg-blue-500 text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"}`}>{label}</button>
+          ))
+        )}
       </nav>
     </div>
     </div>
