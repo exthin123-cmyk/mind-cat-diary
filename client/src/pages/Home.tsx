@@ -165,12 +165,35 @@ export default function Home() {
 
   // --- 일기 & 달력 ---
   const [selectedDateStr, setSelectedDateStr] = useState(new Date().toISOString().split("T")[0]);
-  const [diaries, setDiaries] = useState<Record<string, { avatar: MoodType; title: string; thanks: string; solution?: { tip: string; steps: string[]; music: string } }>>({});
-  const [scheduleEvents, setScheduleEvents] = useState<ScheduleEvent[]>([]);
+  const [diaries, setDiaries] = useState<Record<string, { mood: string; title: string; daily: string; thanks: string; solution?: { tip: string; steps: string[]; music: string } }>>({});
+  const [isDiaryOpen, setIsDiaryOpen] = useState(false);
+  const [diaryMood, setDiaryMood] = useState("😊 기쁨");
+  const [diaryTitle, setDiaryTitle] = useState("");
+  const [diaryDaily, setDiaryDaily] = useState("");
+  const [diaryThanks, setDiaryThanks] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  // --- 커뮤니티 ---
   const [feedPosts, setFeedPosts] = useState<FeedPost[]>([
     { id: "1", author: "드림님", avatar: "😊", content: "오늘 날씨가 정말 좋았어냥! ☀️", date: new Date(Date.now() - 3600000).toISOString(), likes: 5, likedByMe: false, comments: [] },
     { id: "2", author: "냥냥이", avatar: "😢", content: "월요일이 또 왔다... 😢", date: new Date(Date.now() - 7200000).toISOString(), likes: 3, likedByMe: false, comments: [] }
   ]);
+  const [isWritingPost, setIsWritingPost] = useState(false);
+  const [newPostContent, setNewPostContent] = useState("");
+  const [newCommentText, setNewCommentText] = useState<Record<string, string>>({});
+
+  // --- 채팅 ---
+  const [chatMessages, setChatMessages] = useState<{ id: string; sender: "user" | "cat"; text: string }[]>([
+    { id: "1", sender: "cat", text: "안녕하다냥! 오늘 기분은 어떻냥? 무슨 이야기든 들어줄게냥 🐾" }
+  ]);
+  const [chatInput, setChatInput] = useState("");
+  const [isChatLoading, setIsChatLoading] = useState(false);
+
+  // --- 도감 ---
+  const [selectedDexCat, setSelectedDexCat] = useState<MoodType | null>(null);
+
+  // --- 편지함 ---
+  const [letters, setLetters] = useState<{ id: string; date: string; content: string; isRead: boolean }[]>([]);
 
   // --- 함수 ---
   // 5개 랜덤 질문 추출 함수
@@ -308,7 +331,7 @@ export default function Home() {
     for (let day = 1; day <= daysInMonth; day++) {
       const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
       const isSelected = selectedDateStr === dateStr;
-      const hasEvent = diaries[dateStr] || scheduleEvents.some(e => e.date === dateStr);
+      const hasEvent = !!diaries[dateStr];
       days.push(
         <button key={day} onClick={() => setSelectedDateStr(dateStr)} className={`h-10 w-full flex flex-col items-center justify-center rounded-lg transition-all relative ${isSelected ? "bg-blue-500 text-white font-bold" : "bg-white text-black hover:bg-gray-50"}`}>
           <span className="text-xs">{day}</span>
@@ -518,7 +541,8 @@ export default function Home() {
 
   // === 메인 앱 ===
   return (
-    <div className="flex-1 flex flex-col relative h-full bg-white font-sans overflow-hidden">
+    <div className="min-h-screen md:flex md:items-center md:justify-center md:bg-gray-100 md:p-4">
+    <div className="w-full md:max-w-[430px] md:h-[860px] flex flex-col relative bg-white font-sans overflow-hidden md:rounded-3xl md:shadow-2xl">
       {/* TOP BAR */}
       <header className="px-5 py-3.5 flex items-center justify-between border-b border-gray-100 bg-white z-10">
         <button onClick={() => setIsMailOpen(true)} className="p-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-100"><Mail className="w-4 h-4 text-gray-600" /></button>
@@ -544,7 +568,7 @@ export default function Home() {
       </div>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 overflow-y-auto bg-white pb-32 relative">
+      <main className="flex-1 overflow-y-auto bg-white relative">
         
         {/* 고양이 방 탭 */}
         {activeTab === "room" && (
@@ -601,30 +625,72 @@ export default function Home() {
         {/* 대화 탭 */}
         {activeTab === "chat" && (
           <div className="p-5 space-y-4 h-full flex flex-col">
-            <div className="flex-1 space-y-4 overflow-y-auto">
-              <div className="flex justify-center">
-                <div className="max-w-xs bg-blue-100 text-gray-800 p-4 rounded-2xl text-sm font-bold text-center shadow-sm">{bubbleText}</div>
-              </div>
+            <div className="flex-1 space-y-3 overflow-y-auto">
+              {chatMessages.map(msg => (
+                <div key={msg.id} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
+                  {msg.sender === "cat" && <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center mr-2 shrink-0"><img src={CAT_CHARACTERS[catMood].image} alt="" className="w-5 h-5 object-contain" /></div>}
+                  <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-xs font-bold leading-relaxed ${msg.sender === "user" ? "bg-blue-500 text-white rounded-br-sm" : "bg-gray-100 text-gray-800 rounded-bl-sm"}`}>{msg.text}</div>
+                </div>
+              ))}
+              {isChatLoading && <div className="flex justify-start"><div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center mr-2"><img src={CAT_CHARACTERS[catMood].image} alt="" className="w-5 h-5 object-contain" /></div><div className="bg-gray-100 px-4 py-2.5 rounded-2xl rounded-bl-sm"><div className="flex gap-1"><div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></div><div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></div><div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></div></div></div></div>}
             </div>
             <div className="flex gap-2">
-              <input type="text" placeholder="냥이에게 말해주기..." className="flex-1 px-4 py-3 rounded-xl border border-gray-200 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              <button className="p-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-colors"><Send className="w-4 h-4" /></button>
+              <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && chatInput.trim()) { const userMsg = { id: Date.now().toString(), sender: "user" as const, text: chatInput }; setChatMessages(prev => [...prev, userMsg]); setChatInput(""); setIsChatLoading(true); setTimeout(() => { const responses = [`${userName}님의 이야기를 들으니 마음이 따뜻해진다냥 🐾`, `그런 감정을 느끼는 건 당연하다냥. 드림님은 혼자가 아니다냥 💕`, `${CAT_CHARACTERS[catMood].quote}`, `힘든 시간도 반드시 지나갈 거다냥. 내가 항상 곁에 있을게냥 🌸`]; setChatMessages(prev => [...prev, { id: (Date.now()+1).toString(), sender: "cat", text: responses[Math.floor(Math.random() * responses.length)] }]); setIsChatLoading(false); }, 1200); } }} placeholder="냥이에게 말해주기..." className="flex-1 px-4 py-3 rounded-xl border border-gray-200 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <button onClick={() => { if (!chatInput.trim()) return; const userMsg = { id: Date.now().toString(), sender: "user" as const, text: chatInput }; setChatMessages(prev => [...prev, userMsg]); setChatInput(""); setIsChatLoading(true); setTimeout(() => { const responses = [`${userName}님의 이야기를 들으니 마음이 따뜻해진다냥 🐾`, `그런 감정을 느끼는 건 당연하다냥. 드림님은 혼자가 아니다냥 💕`, `${CAT_CHARACTERS[catMood].quote}`, `힘든 시간도 반드시 지나갈 거다냥. 내가 항상 곁에 있을게냥 🌸`]; setChatMessages(prev => [...prev, { id: (Date.now()+1).toString(), sender: "cat", text: responses[Math.floor(Math.random() * responses.length)] }]); setIsChatLoading(false); }, 1200); }} className="p-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-colors"><Send className="w-4 h-4" /></button>
             </div>
           </div>
         )}
 
         {/* 달력 탭 */}
         {activeTab === "calendar" && (
-          <div className="p-5 space-y-5 h-full overflow-y-auto">
-            <div className="text-center">
-              <h2 className="text-lg font-black text-gray-800 mb-4">2024년 6월</h2>
-              <div className="grid grid-cols-7 gap-2">
-                {["일", "월", "화", "수", "목", "금", "토"].map(day => (
-                  <div key={day} className="text-center text-xs font-bold text-gray-500 py-2">{day}</div>
-                ))}
-                {generateCalendarDays()}
-              </div>
+          <div className="p-5 space-y-4 h-full overflow-y-auto">
+            <h2 className="text-lg font-black text-gray-800 text-center">2025년 6월</h2>
+            <div className="grid grid-cols-7 gap-1">
+              {["일", "월", "화", "수", "목", "금", "토"].map(day => (
+                <div key={day} className="text-center text-[10px] font-bold text-gray-400 py-1">{day}</div>
+              ))}
+              {generateCalendarDays()}
             </div>
+
+            {/* 선택된 날짜 일기 */}
+            {diaries[selectedDateStr] ? (
+              <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">{diaries[selectedDateStr].mood.split(" ")[0]}</span>
+                    <div><p className="text-xs font-black text-gray-800">{selectedDateStr}</p><p className="text-[10px] text-gray-500">{diaries[selectedDateStr].mood}</p></div>
+                  </div>
+                  <button onClick={() => { const nd = { ...diaries }; delete nd[selectedDateStr]; setDiaries(nd); localStorage.setItem(STORAGE_KEYS.userDiaries, JSON.stringify(nd)); toast.success("일기가 삭제됐다냥!"); }} className="p-1.5 rounded-lg hover:bg-red-50"><Trash2 className="w-3.5 h-3.5 text-red-400" /></button>
+                </div>
+                <div className="p-3 bg-white rounded-xl border border-gray-100"><p className="text-[10px] font-bold text-gray-400 mb-1">오늘의 감성</p><p className="text-xs font-bold text-gray-700">{diaries[selectedDateStr].title}</p></div>
+                {diaries[selectedDateStr].daily && <div className="p-3 bg-white rounded-xl border border-gray-100"><p className="text-[10px] font-bold text-gray-400 mb-1">오늘의 일상</p><p className="text-xs font-bold text-gray-700">{diaries[selectedDateStr].daily}</p></div>}
+                {diaries[selectedDateStr].thanks && <div className="p-3 bg-white rounded-xl border border-gray-100"><p className="text-[10px] font-bold text-gray-400 mb-1">오늘의 감사</p><p className="text-xs font-bold text-gray-700">{diaries[selectedDateStr].thanks}</p></div>}
+                {diaries[selectedDateStr].solution && (
+                  <div className="p-3 bg-blue-50 rounded-xl border border-blue-100">
+                    <p className="text-[10px] font-bold text-blue-500 mb-1">🐾 AI 냥이의 분석</p>
+                    <p className="text-xs font-bold text-gray-700 mb-2">{diaries[selectedDateStr].solution!.tip}</p>
+                    {diaries[selectedDateStr].solution!.steps.map((step, i) => <p key={i} className="text-[10px] text-gray-600 font-bold">• {step}</p>)}
+                    <p className="text-[10px] text-blue-500 font-bold mt-1.5">🎵 추천 음악: {diaries[selectedDateStr].solution!.music}</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button onClick={() => setIsDiaryOpen(true)} className="w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl text-xs font-bold text-gray-400 hover:border-blue-300 hover:text-blue-500 transition-colors flex items-center justify-center gap-2"><Plus className="w-4 h-4" /> {selectedDateStr} 일기 쓰기</button>
+            )}
+
+            {/* 일기 작성 모달 */}
+            {isDiaryOpen && (
+              <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4">
+                <div className="w-full max-w-md bg-white rounded-3xl p-6 space-y-4 max-h-[85vh] overflow-y-auto">
+                  <div className="flex items-center justify-between"><h3 className="font-black text-gray-800 text-sm">{selectedDateStr} 일기</h3><button onClick={() => setIsDiaryOpen(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><X className="w-4 h-4 text-gray-500" /></button></div>
+                  <div><label className="text-[10px] font-bold text-gray-500 mb-1.5 block">오늘의 감정</label><div className="grid grid-cols-4 gap-1.5">{["😊 기쁨", "😢 슬픔", "😴 피곤", "😰 불안", "🥺 외로움", "😡 화남", "🥰 사랑", "😌 편안"].map(m => (<button key={m} onClick={() => setDiaryMood(m)} className={`py-2 rounded-xl text-xs font-bold transition-all ${diaryMood === m ? "bg-blue-500 text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"}`}>{m.split(" ")[0]}</button>))}</div></div>
+                  <div><label className="text-[10px] font-bold text-gray-500 mb-1 block">오늘의 감성 <span className="text-red-400">*</span></label><textarea value={diaryTitle} onChange={(e) => setDiaryTitle(e.target.value)} placeholder="오늘 어떤 감정을 느꼈나요?" rows={2} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" /></div>
+                  <div><label className="text-[10px] font-bold text-gray-500 mb-1 block">오늘의 일상</label><textarea value={diaryDaily} onChange={(e) => setDiaryDaily(e.target.value)} placeholder="오늘 있었던 일을 기록해보세요" rows={2} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" /></div>
+                  <div><label className="text-[10px] font-bold text-gray-500 mb-1 block">오늘의 감사</label><textarea value={diaryThanks} onChange={(e) => setDiaryThanks(e.target.value)} placeholder="오늘 감사했던 일을 적어보세요" rows={2} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" /></div>
+                  <button onClick={async () => { if (!diaryTitle.trim()) { toast.error("감성을 입력해달라냥!"); return; } setIsAnalyzing(true); await new Promise(r => setTimeout(r, 1500)); const solution = generateDiarySolution(diaryTitle, diaryMood, diaryThanks); const newDiaries = { ...diaries, [selectedDateStr]: { mood: diaryMood, title: diaryTitle, daily: diaryDaily, thanks: diaryThanks, solution } }; setDiaries(newDiaries); localStorage.setItem(STORAGE_KEYS.userDiaries, JSON.stringify(newDiaries)); setIsAnalyzing(false); setIsDiaryOpen(false); setDiaryTitle(""); setDiaryDaily(""); setDiaryThanks(""); setDiaryMood("😊 기쁨"); toast.success("일기가 저장됐다냥! AI가 분석해줬다냥 🐾"); }} disabled={isAnalyzing} className="w-full py-3.5 bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm rounded-2xl transition-colors disabled:opacity-50">{isAnalyzing ? "AI가 분석 중이다냥... 🐾" : "저장하기"}</button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -633,22 +699,50 @@ export default function Home() {
           <div className="p-5 space-y-4 h-full overflow-y-auto">
             <div className="flex items-center gap-2 mb-4">
               <h2 className="text-lg font-black text-gray-800">마음 숲</h2>
-              <button className="ml-auto p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-colors"><Plus className="w-4 h-4" /></button>
+              <button onClick={() => setIsWritingPost(true)} className="ml-auto p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-colors"><Plus className="w-4 h-4" /></button>
             </div>
+
+            {/* 글 작성 */}
+            {isWritingPost && (
+              <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200 space-y-3">
+                <textarea value={newPostContent} onChange={(e) => setNewPostContent(e.target.value)} placeholder="오늘 마음 속 이야기를 나눠보세요냥..." rows={3} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+                <div className="flex gap-2">
+                  <button onClick={() => { if (!newPostContent.trim()) return; const newPost: FeedPost = { id: Date.now().toString(), author: userName, avatar: CAT_CHARACTERS[catMood].emoji, content: newPostContent, date: new Date().toISOString(), likes: 0, likedByMe: false, comments: [] }; const updated = [newPost, ...feedPosts]; setFeedPosts(updated); localStorage.setItem(STORAGE_KEYS.userFeedPosts, JSON.stringify(updated)); setNewPostContent(""); setIsWritingPost(false); toast.success("마음 숲에 글을 남겼다냥 🌳"); }} className="flex-1 py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-xl">게시하기</button>
+                  <button onClick={() => { setIsWritingPost(false); setNewPostContent(""); }} className="flex-1 py-2 bg-gray-100 text-gray-600 font-bold text-xs rounded-xl">취소</button>
+                </div>
+              </div>
+            )}
+
             {feedPosts.map(post => (
               <div key={post.id} className="p-4 rounded-xl bg-gray-50 border border-gray-100 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-blue-200 flex items-center justify-center text-xs font-bold">😊</div>
-                    <div>
-                      <p className="text-xs font-bold text-gray-800">{post.author}</p>
-                      <p className="text-[10px] text-gray-500">{new Date(post.date).toLocaleString()}</p>
-                    </div>
+                    <div className="w-8 h-8 rounded-full bg-blue-200 flex items-center justify-center text-xs font-bold">{post.avatar}</div>
+                    <div><p className="text-xs font-bold text-gray-800">{post.author}</p><p className="text-[10px] text-gray-500">{new Date(post.date).toLocaleDateString("ko-KR")}</p></div>
                   </div>
+                  {post.author === userName && <button onClick={() => { const updated = feedPosts.filter(p => p.id !== post.id); setFeedPosts(updated); localStorage.setItem(STORAGE_KEYS.userFeedPosts, JSON.stringify(updated)); toast.success("글이 삭제됐다냥!"); }} className="p-1.5 rounded-lg hover:bg-red-50"><Trash2 className="w-3 h-3 text-red-400" /></button>}
                 </div>
                 <p className="text-sm text-gray-700 font-bold">{post.content}</p>
-                <div className="flex items-center gap-2">
-                  <button className="flex items-center gap-1 text-xs text-gray-500 hover:text-pink-500 transition-colors"><Heart className="w-3 h-3" /> {post.likes}</button>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => { const updated = feedPosts.map(p => p.id === post.id ? { ...p, likes: p.likedByMe ? p.likes - 1 : p.likes + 1, likedByMe: !p.likedByMe } : p); setFeedPosts(updated); }} className={`flex items-center gap-1 text-xs font-bold transition-colors ${post.likedByMe ? "text-pink-500" : "text-gray-400 hover:text-pink-400"}`}><Heart className={`w-3 h-3 ${post.likedByMe ? "fill-current" : ""}`} /> {post.likes}</button>
+                  <span className="text-xs text-gray-300 font-bold flex items-center gap-1"><MessageCircle className="w-3 h-3" /> {post.comments.length}</span>
+                </div>
+                {/* 댓글 */}
+                {post.comments.length > 0 && (
+                  <div className="pt-2 border-t border-gray-100 space-y-1.5">
+                    {post.comments.map(c => (
+                      <div key={c.id} className="flex items-start gap-2">
+                        <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[8px] font-bold text-gray-600 shrink-0">{c.author[0]}</div>
+                        <div className="flex-1"><span className="text-[10px] font-black text-gray-700 mr-1">{c.author}</span><span className="text-[10px] text-gray-600">{c.text}</span></div>
+                        {c.author === userName && <button onClick={() => { const updated = feedPosts.map(p => p.id === post.id ? { ...p, comments: p.comments.filter(cm => cm.id !== c.id) } : p); setFeedPosts(updated); localStorage.setItem(STORAGE_KEYS.userFeedPosts, JSON.stringify(updated)); }} className="p-0.5 rounded hover:bg-red-50"><Trash2 className="w-2.5 h-2.5 text-red-400" /></button>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* 댓글 입력 */}
+                <div className="flex gap-2 pt-1">
+                  <input type="text" value={newCommentText[post.id] || ""} onChange={(e) => setNewCommentText({ ...newCommentText, [post.id]: e.target.value })} onKeyDown={(e) => { if (e.key === "Enter" && (newCommentText[post.id] || "").trim()) { const updated = feedPosts.map(p => p.id === post.id ? { ...p, comments: [...p.comments, { id: Date.now().toString(), author: userName, text: newCommentText[post.id], date: new Date().toISOString() }] } : p); setFeedPosts(updated); localStorage.setItem(STORAGE_KEYS.userFeedPosts, JSON.stringify(updated)); setNewCommentText({ ...newCommentText, [post.id]: "" }); } }} placeholder="댓글 달기..." className="flex-1 px-3 py-2 rounded-xl bg-white border border-gray-200 text-[10px] font-bold focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                  <button onClick={() => { if (!(newCommentText[post.id] || "").trim()) return; const updated = feedPosts.map(p => p.id === post.id ? { ...p, comments: [...p.comments, { id: Date.now().toString(), author: userName, text: newCommentText[post.id], date: new Date().toISOString() }] } : p); setFeedPosts(updated); localStorage.setItem(STORAGE_KEYS.userFeedPosts, JSON.stringify(updated)); setNewCommentText({ ...newCommentText, [post.id]: "" }); }} className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl"><Send className="w-3 h-3" /></button>
                 </div>
               </div>
             ))}
@@ -686,17 +780,54 @@ export default function Home() {
 
         {/* 도감 탭 */}
         {activeTab === "dex" && (
-          <div className="p-5 space-y-5 h-full overflow-y-auto">
-            <h2 className="text-lg font-black text-gray-800">감정냥이 도감</h2>
-            <div className="grid grid-cols-2 gap-3">
-              {(Object.keys(CAT_CHARACTERS) as MoodType[]).map(mood => (
-                <div key={mood} className={`p-4 rounded-2xl border-2 text-center space-y-2 ${collectedCats.includes(mood) ? "bg-blue-50 border-blue-300" : "bg-gray-50 border-gray-200 opacity-50"}`}>
-                  <img src={CAT_CHARACTERS[mood].image} alt={CAT_CHARACTERS[mood].name} className="w-16 h-16 mx-auto object-contain" />
-                  <p className="text-xs font-bold text-gray-800">{CAT_CHARACTERS[mood].name}</p>
-                  {!collectedCats.includes(mood) && <p className="text-[9px] text-gray-500">미수집</p>}
-                </div>
-              ))}
+          <div className="p-5 space-y-4 h-full overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-black text-gray-800">감정냥이 도감</h2>
+              <span className="text-xs font-bold text-gray-400">{collectedCats.length}/{Object.keys(CAT_CHARACTERS).length}</span>
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              {(Object.keys(CAT_CHARACTERS) as MoodType[]).map(mood => {
+                const cat = CAT_CHARACTERS[mood];
+                const isUnlocked = collectedCats.includes(mood);
+                return (
+                  <button key={mood} onClick={() => isUnlocked && setSelectedDexCat(mood)} className={`p-3 rounded-2xl border-2 text-left transition-all ${isUnlocked ? "bg-blue-50 border-blue-300 hover:shadow-md active:scale-[0.98]" : "bg-gray-50 border-gray-200 opacity-50 cursor-not-allowed"}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <img src={cat.image} alt={cat.name} className={`w-12 h-12 object-contain ${!isUnlocked ? "grayscale" : ""}`} />
+                      <div>
+                        <p className="text-[10px] font-black text-gray-800">{cat.name.split(" ")[0]}</p>
+                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${cat.rarity === "legendary" ? "bg-amber-100 text-amber-600" : cat.rarity === "rare" ? "bg-pink-100 text-pink-600" : cat.rarity === "uncommon" ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-500"}`}>{cat.rarityLabel}</span>
+                      </div>
+                    </div>
+                    {isUnlocked ? <p className="text-[9px] text-gray-500 font-bold line-clamp-2">{cat.description}</p> : <p className="text-[9px] text-gray-400 font-bold">🔒 미수집</p>}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* 도감 상세 모달 */}
+            {selectedDexCat && (
+              <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4">
+                <div className="w-full max-w-md bg-white rounded-3xl p-6 space-y-4 max-h-[85vh] overflow-y-auto">
+                  <div className="flex items-center justify-between"><h3 className="font-black text-gray-800 text-sm">{CAT_CHARACTERS[selectedDexCat].name}</h3><button onClick={() => setSelectedDexCat(null)} className="p-1.5 rounded-lg hover:bg-gray-100"><X className="w-4 h-4 text-gray-500" /></button></div>
+                  <div className="flex items-center gap-4">
+                    <img src={CAT_CHARACTERS[selectedDexCat].image} alt="" className="w-24 h-24 object-contain" />
+                    <div className="flex-1 space-y-1.5">
+                      <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${CAT_CHARACTERS[selectedDexCat].rarity === "legendary" ? "bg-amber-100 text-amber-600" : CAT_CHARACTERS[selectedDexCat].rarity === "rare" ? "bg-pink-100 text-pink-600" : CAT_CHARACTERS[selectedDexCat].rarity === "uncommon" ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-500"}`}>{CAT_CHARACTERS[selectedDexCat].rarityLabel}</span>
+                      <p className="text-xs text-gray-600 font-bold leading-relaxed">{CAT_CHARACTERS[selectedDexCat].description}</p>
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3 space-y-1"><p className="text-[10px] font-bold text-gray-400">특기</p><p className="text-xs text-gray-700 font-bold">{CAT_CHARACTERS[selectedDexCat].specialty}</p></div>
+                  <div className="bg-blue-50 rounded-xl p-3"><p className="text-xs text-blue-600 font-bold italic">"{CAT_CHARACTERS[selectedDexCat].quote}"</p></div>
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-3 border border-purple-100">
+                    <p className="text-[10px] font-bold text-gray-500 mb-2">🎵 어울리는 로파이 음악</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold text-gray-700">{CAT_CHARACTERS[selectedDexCat].lofiMusic.title}</p>
+                      <button onClick={() => { const audio = new Audio(CAT_CHARACTERS[selectedDexCat!].lofiMusic.url); audio.play().catch(() => toast.error("음악 재생에 실패했다냥")); toast.success("음악 재생 중! 🎵"); }} className="px-3 py-1.5 bg-purple-500 hover:bg-purple-600 text-white font-bold text-[10px] rounded-lg transition-colors">▶ 재생</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -779,14 +910,20 @@ export default function Home() {
       </main>
 
       {/* BOTTOM NAV */}
-      <nav className="fixed bottom-0 left-0 right-0 px-5 py-3 bg-white border-t border-gray-100 flex gap-2 justify-between z-20">
-        <button onClick={() => setActiveTab("room")} className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all ${activeTab === "room" ? "bg-blue-500 text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"}`}>🏠 홈</button>
-        <button onClick={() => setActiveTab("chat")} className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all ${activeTab === "chat" ? "bg-blue-500 text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"}`}>💬 대화</button>
-        <button onClick={() => setActiveTab("calendar")} className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all ${activeTab === "calendar" ? "bg-blue-500 text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"}`}>📅 달력</button>
-        <button onClick={() => setActiveTab("community")} className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all ${activeTab === "community" ? "bg-blue-500 text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"}`}>🌳 마음숲</button>
-        <button onClick={() => setActiveTab("report")} className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all ${activeTab === "report" ? "bg-blue-500 text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"}`}>📊 리포트</button>
-        <button onClick={() => setActiveTab("dex")} className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all ${activeTab === "dex" ? "bg-blue-500 text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"}`}>📖 도감</button>
+      <nav className="px-3 py-2.5 bg-white border-t border-gray-100 flex gap-1 justify-between shrink-0">
+        {[
+          { tab: "room", label: "🏠 홈" },
+          { tab: "chat", label: "💬 대화" },
+          { tab: "calendar", label: "📅 달력" },
+          { tab: "community", label: "🌳 마음숲" },
+          { tab: "report", label: "📊 리포트" },
+          { tab: "dex", label: "📖 도감" },
+          ...(isAdminLoggedIn ? [{ tab: "admin", label: "🛡️ 관리" }] : [])
+        ].map(({ tab, label }) => (
+          <button key={tab} onClick={() => setActiveTab(tab as typeof activeTab)} className={`flex-1 py-2.5 rounded-xl font-bold text-[10px] transition-all ${activeTab === tab ? "bg-blue-500 text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"}`}>{label}</button>
+        ))}
       </nav>
+    </div>
     </div>
   );
 }
