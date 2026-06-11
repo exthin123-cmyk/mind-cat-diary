@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { MoodType, CAT_CHARACTERS, ScheduleEvent, FeedPost, QUESTION_BANK } from "../lib/types";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis } from "recharts";
 import Dex from "./Dex";
+import AdminEditor from "./AdminEditor";
 
 const LOFI_PLAYLIST: Record<string, { title: string; url: string }> = {
   "기쁨 😊": { title: "포근한 햇살 Lofi ☀️", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
@@ -930,78 +931,14 @@ export default function Home() {
 
         {/* 관리자 탭 */}
         {activeTab === "admin" && isAdminLoggedIn && (
-          <div className="p-5 space-y-5 h-full overflow-y-auto">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-black text-gray-800">🛡️ 관리자 대시보드</h2>
+          <div className="flex flex-col h-full">
+            <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between shrink-0">
+              <h2 className="text-sm font-black text-gray-800">🛡️ 관리자 에디터</h2>
               <button onClick={() => { setIsAdminLoggedIn(false); setActiveTab("room"); toast.success("관리자 로그아웃!"); }} className="text-xs font-bold text-gray-600 hover:text-red-600">로그아웃</button>
             </div>
-
-            {/* 게임 링크 관리 */}
-            <div className="bg-blue-50 rounded-2xl p-4 border-2 border-blue-200 space-y-3">
-              <h3 className="font-bold text-sm text-gray-800">🎮 게임 링크 관리</h3>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-600">마인드 블럭 링크</label>
-                <input type="text" value={adminSettings.gameLinks.mindBlock} onChange={(e) => setAdminSettings({...adminSettings, gameLinks: {...adminSettings.gameLinks, mindBlock: e.target.value}})} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-600">음악 듣기 링크</label>
-                <input type="text" value={adminSettings.gameLinks.musicListen} onChange={(e) => setAdminSettings({...adminSettings, gameLinks: {...adminSettings.gameLinks, musicListen: e.target.value}})} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              </div>
+            <div className="flex-1 overflow-hidden">
+              <AdminEditor />
             </div>
-
-            {/* 광고 관리 */}
-            <div className="bg-purple-50 rounded-2xl p-4 border-2 border-purple-200 space-y-3">
-              <h3 className="font-bold text-sm text-gray-800">📢 광고 관리</h3>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-600">광고 배너 문구</label>
-                <input type="text" value={adminSettings.ads.bannerText} onChange={(e) => setAdminSettings({...adminSettings, ads: {...adminSettings.ads, bannerText: e.target.value}})} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-purple-500" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-600">광고 링크</label>
-                <input type="text" value={adminSettings.ads.bannerLink} onChange={(e) => setAdminSettings({...adminSettings, ads: {...adminSettings.ads, bannerLink: e.target.value}})} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-purple-500" />
-              </div>
-            </div>
-
-            {/* 페이지 이름 수정 */}
-            <div className="bg-green-50 rounded-2xl p-4 border-2 border-green-200 space-y-3">
-              <h3 className="font-bold text-sm text-gray-800">📝 페이지 이름 수정</h3>
-              <div className="grid grid-cols-2 gap-2">
-                {Object.entries(adminSettings.pageNames).map(([key, value]) => (
-                  <div key={key} className="space-y-1">
-                    <label className="text-xs font-bold text-gray-600">{key}</label>
-                    <input type="text" value={value} onChange={(e) => setAdminSettings({...adminSettings, pageNames: {...adminSettings.pageNames, [key]: e.target.value}})} className="w-full px-2 py-1 rounded-lg border border-gray-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-green-500" />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 비밀번호 변경 */}
-            <div className="bg-red-50 rounded-2xl p-4 border-2 border-red-200 space-y-3">
-              <h3 className="font-bold text-sm text-gray-800">🔐 비밀번호 변경</h3>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-600">새 비밀번호</label>
-                <input type="password" value={adminNewPassword} onChange={(e) => setAdminNewPassword(e.target.value)} placeholder="새 비밀번호 입력" className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-red-500" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-600">비밀번호 재입력</label>
-                <input type="password" value={adminNewPasswordConfirm} onChange={(e) => setAdminNewPasswordConfirm(e.target.value)} placeholder="비밀번호 재입력" className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-red-500" />
-              </div>
-              <button onClick={() => {
-                if (!adminNewPassword.trim()) { toast.error("새 비밀번호를 입력해달라냥!"); return; }
-                if (adminNewPassword !== adminNewPasswordConfirm) { toast.error("비밀번호가 일치하지 않다냥!"); return; }
-                setAdminSettings({...adminSettings, adminPassword: adminNewPassword});
-                localStorage.setItem(STORAGE_KEYS.adminSettings, JSON.stringify({...adminSettings, adminPassword: adminNewPassword}));
-                setAdminNewPassword("");
-                setAdminNewPasswordConfirm("");
-                toast.success("비밀번호가 변경되었다냥! 🔐");
-              }} className="w-full py-2 bg-red-500 hover:bg-red-600 text-white font-bold text-xs rounded-lg transition-colors">비밀번호 변경</button>
-            </div>
-
-            {/* 설정 저장 */}
-            <button onClick={() => {
-              localStorage.setItem(STORAGE_KEYS.adminSettings, JSON.stringify(adminSettings));
-              toast.success("모든 설정이 저장되었다냥! 💾");
-            }} className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm rounded-2xl transition-colors shadow-md">모든 설정 저장</button>
           </div>
         )}
       </main>
