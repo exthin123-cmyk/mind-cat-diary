@@ -32,7 +32,19 @@ function App() {
       >
         <TooltipProvider>
           <Toaster />
-          <Router />
+          {/* PC: 한가운데 핸드폰 프레임, 모바일: 전체화면 */}
+          <div className="min-h-screen bg-[#f0f0f0] flex items-center justify-center md:p-8">
+            <div className="w-full md:w-[393px] md:min-h-[852px] md:max-h-[852px] md:rounded-[50px] md:shadow-[0_30px_80px_rgba(0,0,0,0.3)] md:overflow-hidden md:border-[10px] md:border-gray-900 relative bg-white flex flex-col">
+              {/* 핵 노치 */}
+              <div className="hidden md:flex absolute top-0 left-1/2 -translate-x-1/2 w-28 h-7 bg-gray-900 rounded-b-2xl z-50 items-center justify-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-gray-700"></div>
+                <div className="w-12 h-1.5 rounded-full bg-gray-700"></div>
+              </div>
+              <div className="flex-1 overflow-hidden flex flex-col md:pt-7">
+                <Router />
+              </div>
+            </div>
+          </div>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

@@ -453,7 +453,7 @@ export default function Home() {
   // ============================================================
   if (authView === "landing") {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="flex-1 flex items-center justify-center p-4 bg-gray-50 overflow-y-auto">
         <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden">
           <div className="px-8 pt-12 pb-6 text-center space-y-3">
             <div className="text-5xl mb-2">🐾</div>
@@ -506,7 +506,7 @@ export default function Home() {
   // ============================================================
   if (authView === "admin-login") {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="flex-1 flex items-center justify-center p-4 bg-gray-50 overflow-y-auto">
         <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden">
           <div className="px-8 pt-12 pb-6 text-center space-y-3">
             <div className="text-5xl mb-2">🛡️</div>
@@ -539,7 +539,7 @@ export default function Home() {
   // ============================================================
   if (authView === "signup") {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="flex-1 flex items-center justify-center p-4 bg-gray-50 overflow-y-auto">
         <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
           <div className="px-8 pt-8 pb-4">
             <button onClick={() => setAuthView("landing")} className="flex items-center gap-1 text-gray-400 text-xs font-bold mb-6"><ChevronLeft className="w-4 h-4" /> 돌아가기</button>
@@ -600,7 +600,7 @@ export default function Home() {
   if (!isTestCompleted || activeQuestions.length === 0) {
     const q = activeQuestions[currentQuestionIndex] || QUESTION_BANK[0];
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="flex-1 flex items-center justify-center p-4 bg-gray-50 overflow-y-auto">
         <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden">
           <div className="px-8 pt-10 pb-6 text-center space-y-2">
             <div className="inline-block px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full">감정 테스트 {currentQuestionIndex + 1}/5</div>
@@ -1119,9 +1119,7 @@ export default function Home() {
   const unreadLetterCount = letters.filter(l => !l.isRead).length;
 
   return (
-    // PC에서는 중앙에 핸드폰 프레임, 모바일에서는 전체 화면
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center md:p-8">
-      <div className="w-full md:w-[390px] md:h-[844px] md:rounded-[40px] md:shadow-2xl md:overflow-hidden bg-white flex flex-col relative md:border-8 md:border-gray-900">
+    <div className="flex-1 flex flex-col bg-white relative overflow-hidden h-full">
         
         {/* 편지함 모달 */}
         {isMailOpen && (
@@ -1226,7 +1224,6 @@ export default function Home() {
             </button>
           ))}
         </nav>
-      </div>
     </div>
   );
 }
