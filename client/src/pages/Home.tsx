@@ -51,6 +51,9 @@ export default function Home() {
   // --- DB에서 관리자 설정 조회 (모든 기기 반영) ---
   const { data: dbAdminConfig } = trpc.adminConfig.get.useQuery();
 
+  // --- DB에서 공지사항 조회 ---
+  const { data: dbAnnouncements } = trpc.announcements.list.useQuery();
+
   // --- localStorage 키 ---
   const STORAGE_KEYS = {
     adminSettings: 'mindcat_admin_settings',
@@ -1020,11 +1023,36 @@ export default function Home() {
               <button onClick={() => setIsMailOpen(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><X className="w-4 h-4 text-gray-500" /></button>
             </div>
             <div className="flex-1 overflow-y-auto p-5 space-y-2">
-              {letters.length === 0 ? (
+              {/* 관리자 공지사항 섹션 */}
+              {dbAnnouncements && dbAnnouncements.length > 0 && (
+                <div className="mb-3">
+                  <p className="text-[10px] font-black text-orange-500 mb-2">📢 관리자 공지사항</p>
+                  {dbAnnouncements.map(ann => (
+                    <div key={ann.id} className={`p-4 rounded-2xl border mb-2 ${
+                      ann.type === 'warning' ? 'bg-red-50 border-red-200' :
+                      ann.type === 'event' ? 'bg-purple-50 border-purple-200' :
+                      'bg-orange-50 border-orange-200'
+                    }`}>
+                      <div className="flex items-start gap-3">
+                        <span className="text-xl shrink-0">{ann.type === 'warning' ? '⚠️' : ann.type === 'event' ? '🎉' : '📣'}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-black text-gray-800">{ann.title}</p>
+                          <p className="text-[10px] text-gray-400 font-bold">{new Date(ann.createdAt).toLocaleDateString('ko-KR')}</p>
+                          <p className="text-xs text-gray-600 font-bold mt-1 leading-relaxed">{ann.content}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="border-b border-gray-100 my-3"></div>
+                </div>
+              )}
+
+              {/* 감정렼이 편지 */}
+              {letters.length === 0 && (!dbAnnouncements || dbAnnouncements.length === 0) ? (
                 <div className="text-center py-12">
-                  <p className="text-4xl mb-2">📭</p>
-                  <p className="text-sm font-bold text-gray-500">아직 편지가 없다냥!</p>
-                  <p className="text-xs text-gray-400 font-bold mt-1">매일 감정냥이가 편지를 보내줄 거다냥 🐾</p>
+                  <p className="text-4xl mb-2">💭</p>
+                  <p className="text-sm font-bold text-gray-500">아직 편지가 없다렼!</p>
+                  <p className="text-xs text-gray-400 font-bold mt-1">매일 감정렼이가 편지를 보내줌 거다렼 🐾</p>
                 </div>
               ) : letters.map(letter => (
                 <div key={letter.id} className={`p-4 rounded-2xl border text-left transition-all ${letter.isRead ? "bg-white border-gray-100" : "bg-blue-50 border-blue-200"}`}>

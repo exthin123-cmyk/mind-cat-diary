@@ -125,3 +125,16 @@ export const collectedCats = mysqlTable("collected_cats", {
 
 export type CollectedCat = typeof collectedCats.$inferSelect;
 export type InsertCollectedCat = typeof collectedCats.$inferInsert;
+
+// 관리자 공지사항 테이블
+export const announcements = mysqlTable("announcements", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 200 }).notNull(),
+  content: text("content").notNull(),
+  type: mysqlEnum("type", ["info", "warning", "event"]).default("info").notNull(),
+  isActive: int("isActive").default(1).notNull(), // 1=활성, 0=삭제됨
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Announcement = typeof announcements.$inferSelect;
+export type InsertAnnouncement = typeof announcements.$inferInsert;

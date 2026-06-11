@@ -91,3 +91,11 @@
 - [x] 관리자 대시보드에 버튼 문구 입력란 추가
 - [x] DB에 adBannerImage, adButtonText 컬럼 추가 및 마이그레이션
 - [x] 모든 기기에서 동일하게 반영 (DB 저장)
+
+## 공지사항 편지함 연동 (신규)
+- [x] DB에 announcements 테이블 추가 (title, content, type, isActive, createdAt)
+- [x] tRPC 라우터 구현 (list, create, delete)
+- [x] 관리자 대시보드 공지사항 발송 시 DB에 저장
+- [x] 관리자 대시보드 공지사항 삭제 시 DB에서도 삭제
+- [x] 일반 사용자 편지함에 관리자 공지사항 섹션 표시
+- [x] 공지 유형별 색상 구분 (일반=주황, 경고=빨강, 이벤트=보라)

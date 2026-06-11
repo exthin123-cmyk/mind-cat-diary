@@ -7,7 +7,7 @@ import { z } from "zod";
 import Stripe from "stripe";
 import { PRODUCTS } from "./products";
 import { getDb } from "./db";
-import { userProfiles, diaries, chatMessages, adminSettings as adminSettingsTable } from "../drizzle/schema";
+import { userProfiles, diaries, chatMessages, adminSettings as adminSettingsTable, announcements } from "../drizzle/schema";
 import { eq, and, gte, lte, desc } from "drizzle-orm";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -384,7 +384,56 @@ aiSummary = typeof rawSummary === "string" ? rawSummary : "";
         }
         return { success: true };
       }),
-  })
+  }),
+
+  // =====================================================
+  // 공지사항 라우터
+  // =====================================================
+  announcements: router({
+    // 공지사항 목록 조회 (일반 사용자도 읽기 가능)
+    list: publicProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      const rows = await db
+        .select()
+        .from(announcements)
+        .where(eq(announcements.isActive, 1))
+        .orderBy(desc(announcements.createdAt));
+      return rows;
+    }),
+
+    // 공지사항 생성 (관리자 전용)
+    create: publicProcedure
+      .input(z.object({
+        title: z.string().min(1),
+        content: z.string().min(1),
+        type: z.enum(["info", "warning", "event"]).default("info"),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return { success: false };
+        await db.insert(announcements).values({
+          title: input.title,
+          content: input.content,
+          type: input.type,
+          isActive: 1,
+        });
+        return { success: true };
+      }),
+
+    // 공지사항 삭제 (관리자 전용)
+    delete: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return { success: false };
+        await db
+          .update(announcements)
+          .set({ isActive: 0 })
+          .where(eq(announcements.id, input.id));
+        return { success: true };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

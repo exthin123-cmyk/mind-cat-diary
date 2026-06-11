@@ -107,8 +107,18 @@ export default function AdminDashboard() {
   // --- DB 연동 ---
   const { data: dbConfig } = trpc.adminConfig.get.useQuery();
   const saveConfigMutation = trpc.adminConfig.save.useMutation({
-    onSuccess: () => toast.success("DB에 저장되었다냥! 모든 기기에 반영됩니다! ✅"),
+    onSuccess: () => toast.success("DB에 저장되었다렼! 모든 기기에 반영됩니다! ✅"),
     onError: () => toast.error("DB 저장 실패. localStorage에만 저장됩니다."),
+  });
+
+  // --- 공지사항 DB 연동 ---
+  const { data: dbAnnouncements, refetch: refetchAnnouncements } = trpc.announcements.list.useQuery();
+  const createAnnouncementMutation = trpc.announcements.create.useMutation({
+    onSuccess: () => { toast.success("공지사항이 DB에 저장되었다렼! 편지함에 표시됩니다! 📢"); refetchAnnouncements(); },
+    onError: () => toast.error("공지사항 DB 저장 실패!"),
+  });
+  const deleteAnnouncementMutation = trpc.announcements.delete.useMutation({
+    onSuccess: () => { toast.success("공지사항이 삭제되었다렼! 🗑️"); refetchAnnouncements(); },
   });
 
   // --- 탭 상태 ---
@@ -503,6 +513,12 @@ export default function AdminDashboard() {
   // ===================== 공지사항 관리 =====================
   const sendNotification = () => {
     if (!notificationTitle.trim() || !notificationContent.trim()) { toast.error("제목과 내용을 입력해주세요!"); return; }
+    // DB에 저장 (localStorage도 병행 유지)
+    createAnnouncementMutation.mutate({
+      title: notificationTitle,
+      content: notificationContent,
+      type: notificationType,
+    });
     const n: Notification = {
       id: Date.now().toString(),
       title: notificationTitle,
@@ -515,15 +531,17 @@ export default function AdminDashboard() {
     localStorage.setItem(STORAGE_KEYS.notifications, JSON.stringify(updated));
     addLog("공지사항 발송", notificationTitle, "notification");
     setNotificationTitle(""); setNotificationContent("");
-    toast.success("공지사항이 발송되었다냥! 📢");
   };
 
   const deleteNotification = (id: string) => {
+    // DB에서 삭제 (dbAnnouncements에서 일치하는 항목 삭제)
+    const dbItem = dbAnnouncements?.find(a => a.title === notifications.find(n => n.id === id)?.title);
+    if (dbItem) deleteAnnouncementMutation.mutate({ id: dbItem.id });
     const updated = notifications.filter(n => n.id !== id);
     setNotifications(updated);
     localStorage.setItem(STORAGE_KEYS.notifications, JSON.stringify(updated));
     addLog("공지사항 삭제", "공지 삭제됨", "notification");
-    toast.success("공지사항이 삭제되었다냥! 🗑️");
+    toast.success("공지사항이 삭제되었다렼! 🗑️");
   };
 
   const filteredLogs = adminLogs.filter(l => logFilter === "all" || l.category === logFilter);
