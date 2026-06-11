@@ -65,7 +65,7 @@ export default function Home() {
   const [generalPasswordConfirm, setGeneralPasswordConfirm] = useState("");
   const [isLoginMode, setIsLoginMode] = useState(false);
 
-  // --- 심리테스트 ---
+  // --- 감정 테스트 ---
   const [isTestCompleted, setIsTestCompleted] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [activeQuestions, setActiveQuestions] = useState<typeof QUESTION_BANK>([]);
@@ -92,7 +92,7 @@ export default function Home() {
     {
       emoji: "🐾",
       title: "Mind Cat Diary에 오신 걸 환영한다냥!",
-      desc: "감정냥이와 함께 매일 마음을 기록하고, 힐링하고, 성장하는 나만의 감정 다이어리 앱이다냥. 먼저 심리테스트로 나만의 감정냥이를 만나보라냥!",
+      desc: "감정냥이와 함께 매일 마음을 기록하고, 힐링하고, 성장하는 나만의 감정 다이어리 앱이다냥. 먼저 감정 테스트로 나만의 감정냥이를 만나보라냥!",
       highlight: null
     },
     {
@@ -122,7 +122,7 @@ export default function Home() {
     {
       emoji: "🎁",
       title: "도감 — 감정냥이 수집",
-      desc: "심리테스트를 통해 다양한 감정냥이를 만나고 수집해보다냥! 각 냥이마다 특별한 이야기가 있다냥.",
+      desc: "감정 테스트를 통해 다양한 감정냥이를 만나고 수집해보다냥! 각 냥이마다 특별한 이야기가 있다냥.",
       highlight: "도감"
     }
   ];
@@ -173,8 +173,16 @@ export default function Home() {
   ]);
 
   // --- 함수 ---
+  // 5개 랜덤 질문 추출 함수
+  const pickRandomQuestions = () => {
+    const shuffled = [...QUESTION_BANK].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 5);
+  };
+
   // --- useEffect: localStorage 초기화 ---
   useEffect(() => {
+    // 감정 테스트 질문 추출 (5개)
+    setActiveQuestions(pickRandomQuestions());
     // 관리자 설정 로드
     const savedAdminSettings = localStorage.getItem(STORAGE_KEYS.adminSettings);
     if (savedAdminSettings) {
@@ -230,7 +238,7 @@ export default function Home() {
     });
     setTestScores(newScores);
 
-    if (currentQuestionIndex < 9) {
+    if (currentQuestionIndex < 4) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
       const maxMood = Object.entries(newScores).reduce((a, b) => a[1] > b[1] ? a : b)[0] as MoodType;
@@ -245,6 +253,8 @@ export default function Home() {
         unfair: 0, anxious: 0, lonely: 0, lethargic: 0, angry: 0, love: 0, shy: 0, shocked: 0, bored: 0, depressed: 0,
         excited: 0, scared: 0, proud: 0, curious: 0, guilty: 0, relaxed: 0
       });
+      // 다음 테스트를 위해 새 5개 질문 추출
+      setActiveQuestions(pickRandomQuestions());
       setOnboardingStep(0);
       setIsOnboardingOpen(false);
       toast.success(`${CAT_CHARACTERS[maxMood].name}를 만났다냥! 🐾`);
@@ -336,7 +346,7 @@ export default function Home() {
         </div>
         <div className="px-6 py-4 space-y-3">
           {[
-            { icon: "🧠", title: "심리테스트로 나만의 냥이 매칭", desc: "10문항으로 내 감정 유형에 딱 맞는 고양이가 배정된다냥!" },
+            { icon: "🧠", title: "감정 테스트로 나만의 냥이 매칭", desc: "10문항으로 내 감정 유형에 딱 맞는 고양이가 배정된다냥!" },
             { icon: "📖", title: "일기 쓰면 AI 맞춤 솔루션 제공", desc: "GPT AI가 일기를 분석해 실질적인 해결책과 Lofi 음악을 추천한다냥!" },
             { icon: "💬", title: "GPT AI 냥이와 대화하기", desc: "언제든지 감정냥이에게 속마음을 털어놓으면 AI가 공감해준다냥!" },
             { icon: "📊", title: "월간 감정 분석 리포트", desc: "한 달간의 감정 변화를 차트로 분석하고 AI 요약을 받아볼 수 있다냥!" }
@@ -410,7 +420,7 @@ export default function Home() {
         
         {!isLoginMode ? (
           <>
-            <div className="text-center space-y-2 mb-8"><div className="text-4xl">🐾</div><h2 className="text-xl font-black text-gray-800">나만의 감정냥이 만들기</h2><p className="text-xs text-gray-500 font-bold">닉네임과 고양이 이름을 설정하고 심리테스트를 시작하세요냥!</p></div>
+            <div className="text-center space-y-2 mb-8"><div className="text-4xl">🐾</div><h2 className="text-xl font-black text-gray-800">나만의 감정냥이 만들기</h2><p className="text-xs text-gray-500 font-bold">닉네임과 고양이 이름을 설정하고 감정 테스트를 시작하세요냥!</p></div>
             <div className="space-y-5 flex-1">
               <div className="space-y-1.5"><label className="text-xs font-black text-gray-600">나의 닉네임</label><input type="text" value={signupNickname} onChange={(e) => setSignupNickname(e.target.value)} placeholder="예: 드림님, 집사, 냥냥이..." className="w-full px-4 py-3 rounded-xl border border-gray-200 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
               <div className="space-y-1.5"><label className="text-xs font-black text-gray-600">나의 감정냥이 이름</label><input type="text" value={signupCatName} onChange={(e) => setSignupCatName(e.target.value)} placeholder="예: 드림이, 뭉치, 나비..." className="w-full px-4 py-3 rounded-xl border border-gray-200 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
@@ -420,7 +430,7 @@ export default function Home() {
               <div className="p-4 rounded-2xl bg-blue-50 border border-blue-100 space-y-2">
                 <h3 className="text-xs font-black text-blue-700">📋 시작 혜택</h3>
                 <ul className="text-[11px] text-blue-600 font-bold space-y-1">
-                  <li>✅ 심리테스트로 나만의 감정냥이 매칭</li>
+                  <li>✅ 감정 테스트로 나만의 감정냥이 매칭</li>
                   <li>✅ AI 냥이와 대화하기 이용</li>
                   <li>✅ 일기 작성 시 AI 맞춤 솔루션 & Lofi 음악 추천</li>
                 </ul>
@@ -480,13 +490,13 @@ export default function Home() {
     );
   }
 
-  // === 심리테스트 화면 ===
+  // === 감정 테스트 화면 ===
   if (!isTestCompleted || activeQuestions.length === 0) {
     const q = activeQuestions[currentQuestionIndex] || QUESTION_BANK[0];
     return (
       <div className="flex-1 flex flex-col justify-between p-6 bg-white h-full overflow-y-auto">
         <div className="text-center space-y-2 mt-6">
-          <div className="inline-block px-3 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded-full">마인드캣 심리테스트 ({currentQuestionIndex + 1}/10)</div>
+          <div className="inline-block px-3 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded-full">감정 테스트 ({currentQuestionIndex + 1}/5)</div>
           <h2 className="text-xl font-black text-gray-800 tracking-tight leading-snug">나와 어울리는 감정냥이는 누구일까?</h2>
           <p className="text-xs text-gray-500 font-medium">검사할 때마다 새로운 질문지로 매번 다른 결과를 받아볼 수 있다냥!</p>
         </div>
@@ -499,8 +509,8 @@ export default function Home() {
           </div>
         </div>
         <div className="space-y-2 mb-6">
-          <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-blue-500 transition-all duration-300" style={{ width: `${((currentQuestionIndex + 1) / 10) * 100}%` }}></div></div>
-          <div className="text-center text-[10px] text-gray-400 font-bold">10개의 문항을 완료하면 맞춤 고양이 방이 열립니다냥.</div>
+          <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-blue-500 transition-all duration-300" style={{ width: `${((currentQuestionIndex + 1) / 5) * 100}%` }}></div></div>
+          <div className="text-center text-[10px] text-gray-400 font-bold">5개의 문항을 완료하면 나만의 감정냥이를 만납니다냥!</div>
         </div>
       </div>
     );
