@@ -130,7 +130,7 @@ export default function AdminDashboard() {
   const [adminSettings, setAdminSettings] = useState({
     pageNames: { home: "홈", chat: "대화", diary: "일기", calendar: "달력", community: "마음 숲", report: "리포트", dex: "도감" },
     gameLinks: { mindBlock: "", musicListen: "" },
-    ads: { bannerText: "상담이 필요하신가요?", bannerLink: "" },
+    ads: { bannerText: "상담이 필요하신가요?", bannerLink: "", bannerImage: "", buttonText: "상담 신청하기" },
     adminPassword: "123456"
   });
 
@@ -196,7 +196,7 @@ export default function AdminDashboard() {
     setAdminSettings(load(STORAGE_KEYS.adminSettings, {
       pageNames: { home: "홈", chat: "대화", diary: "일기", calendar: "달력", community: "마음 숲", report: "리포트", dex: "도감" },
       gameLinks: { mindBlock: "", musicListen: "" },
-      ads: { bannerText: "상담이 필요하신가요?", bannerLink: "" },
+      ads: { bannerText: "상담이 필요하신가요?", bannerLink: "", bannerImage: "", buttonText: "상담 신청하기" },
       adminPassword: "123456"
     }));
   }, []);
@@ -213,6 +213,8 @@ export default function AdminDashboard() {
         ads: {
           bannerText: dbConfig.adBannerText || "상담이 필요하신가요?",
           bannerLink: dbConfig.adBannerLink || "",
+          bannerImage: dbConfig.adBannerImage || "",
+          buttonText: dbConfig.adButtonText || "상담 신청하기",
         },
         adminPassword: dbConfig.adminPassword || "123456",
       }));
@@ -859,12 +861,39 @@ export default function AdminDashboard() {
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-orange-400"
                   />
                 </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-600 mb-1 block">배너 이미지 URL <span className="text-gray-400 font-normal">(JPG/PNG 이미지 주소)</span></label>
+                  <input
+                    type="url"
+                    value={adminSettings.ads.bannerImage}
+                    onChange={e => setAdminSettings({ ...adminSettings, ads: { ...adminSettings.ads, bannerImage: e.target.value } })}
+                    placeholder="https://example.com/banner.jpg"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  />
+                  {adminSettings.ads.bannerImage && (
+                    <div className="mt-2 rounded-xl overflow-hidden border border-gray-200">
+                      <img src={adminSettings.ads.bannerImage} alt="배너 미리보기" className="w-full object-cover" style={{ maxHeight: '80px' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-600 mb-1 block">버튼 문구 <span className="text-gray-400 font-normal">(상담 신청 버튼 텍스트)</span></label>
+                  <input
+                    type="text"
+                    value={adminSettings.ads.buttonText}
+                    onChange={e => setAdminSettings({ ...adminSettings, ads: { ...adminSettings.ads, buttonText: e.target.value } })}
+                    placeholder="상담 신청하기"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  />
+                </div>
                 <button
                   onClick={() => {
                     localStorage.setItem(STORAGE_KEYS.adminSettings, JSON.stringify(adminSettings));
                     saveConfigMutation.mutate({
                       adBannerText: adminSettings.ads.bannerText,
                       adBannerLink: adminSettings.ads.bannerLink,
+                      adBannerImage: adminSettings.ads.bannerImage,
+                      adButtonText: adminSettings.ads.buttonText,
                     });
                     addLog("광고 문구 저장", adminSettings.ads.bannerText, "ad");
                   }}

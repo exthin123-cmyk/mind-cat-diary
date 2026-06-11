@@ -362,6 +362,8 @@ aiSummary = typeof rawSummary === "string" ? rawSummary : "";
         adminPassword: z.string().optional(),
         adBannerText: z.string().optional(),
         adBannerLink: z.string().optional(),
+        adBannerImage: z.string().optional(),
+        adButtonText: z.string().optional(),
         mindBlockLink: z.string().optional(),
         musicGameLink: z.string().optional(),
         pageNameChat: z.string().optional(),

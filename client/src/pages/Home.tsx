@@ -165,7 +165,9 @@ export default function Home() {
     },
     ads: {
       bannerText: "상담이 필요하신가요?",
-      bannerLink: "https://example.com/counseling"
+      bannerLink: "https://example.com/counseling",
+      bannerImage: "",
+      buttonText: "상담 신청하기"
     },
     adminPassword: "123456"
   });
@@ -311,6 +313,8 @@ export default function Home() {
         ads: {
           bannerText: dbAdminConfig.adBannerText || prev.ads.bannerText,
           bannerLink: dbAdminConfig.adBannerLink || prev.ads.bannerLink,
+          bannerImage: dbAdminConfig.adBannerImage || prev.ads.bannerImage,
+          buttonText: dbAdminConfig.adButtonText || prev.ads.buttonText,
         },
         adminPassword: dbAdminConfig.adminPassword || prev.adminPassword,
       }));
@@ -748,6 +752,21 @@ export default function Home() {
               )}
             </div>
 
+            {/* 광고 배너 이미지 (관리자가 설정한 경우에만 표시) */}
+            {adminSettings.ads.bannerImage && (
+              <div
+                className="w-full rounded-2xl overflow-hidden cursor-pointer shadow-sm border border-gray-100 mt-2"
+                onClick={() => adminSettings.ads.bannerLink && window.open(adminSettings.ads.bannerLink, '_blank')}
+              >
+                <img
+                  src={adminSettings.ads.bannerImage}
+                  alt="광고 배너"
+                  className="w-full object-cover"
+                  style={{ maxHeight: '120px' }}
+                />
+              </div>
+            )}
+
             {/* 카드 결과 모달 */}
             {showCardResult && (
               <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
@@ -923,7 +942,10 @@ export default function Home() {
             {/* 상담 광고 섹션 */}
             <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-4 border-2 border-purple-200 text-center space-y-3">
               <h3 className="font-bold text-sm text-gray-800">💬 {adminSettings.ads.bannerText}</h3>
-              <button onClick={() => window.open(adminSettings.ads.bannerLink, '_blank')} className="w-full py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold text-xs rounded-xl transition-colors">상담 예약하기</button>
+              {adminSettings.ads.bannerImage && (
+                <img src={adminSettings.ads.bannerImage} alt="광고 배너" className="w-full rounded-xl object-cover" style={{ maxHeight: '100px' }} />
+              )}
+              <button onClick={() => adminSettings.ads.bannerLink && window.open(adminSettings.ads.bannerLink, '_blank')} className="w-full py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold text-xs rounded-xl transition-colors">{adminSettings.ads.buttonText || '상담 신청하기'}</button>
             </div>
           </div>
         )}

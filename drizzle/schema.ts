@@ -74,6 +74,8 @@ export const adminSettings = mysqlTable("admin_settings", {
   adminPassword: varchar("adminPassword", { length: 255 }).notNull(),
   adBannerText: text("adBannerText"),
   adBannerLink: varchar("adBannerLink", { length: 500 }),
+  adBannerImage: text("adBannerImage"),
+  adButtonText: varchar("adButtonText", { length: 200 }).default("상담 신청하기"),
   mindBlockLink: varchar("mindBlockLink", { length: 500 }),
   musicGameLink: varchar("musicGameLink", { length: 500 }),
   pageNameChat: varchar("pageNameChat", { length: 100 }).default("대화"),
