@@ -164,6 +164,8 @@ export default function Home() {
   });
 
   // --- 일기 & 달력 ---
+  const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
+  const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth());
   const [selectedDateStr, setSelectedDateStr] = useState(new Date().toISOString().split("T")[0]);
   const [diaries, setDiaries] = useState<Record<string, { mood: string; title: string; daily: string; thanks: string; solution?: { tip: string; steps: string[]; music: string } }>>({});
   const [isDiaryOpen, setIsDiaryOpen] = useState(false);
@@ -250,6 +252,37 @@ export default function Home() {
         console.error('Failed to load feed posts:', e);
       }
     }
+
+    // 편지함 로드 및 오늘 편지 생성
+    const LETTERS_KEY = 'mindcat_cat_letters';
+    let existingLetters: { id: string; date: string; content: string; isRead: boolean }[] = [];
+    const savedLetters = localStorage.getItem(LETTERS_KEY);
+    if (savedLetters) {
+      try { existingLetters = JSON.parse(savedLetters); } catch (e) {}
+    }
+    const today = new Date().toISOString().split('T')[0];
+    const hasTodayLetter = existingLetters.some(l => l.date === today);
+    if (!hasTodayLetter) {
+      const catLetters = [
+        `오늘도 하루 수고 많았다냥! 내가 항상 곁에 있다냥 🐾`,
+        `힘든 일이 있어도 괜찮다냥. 내일은 더 좋은 날이 될 거다냥 🌸`,
+        `오늘 기분이 어떻냥? 일기를 써보면 마음이 가벼워질 거다냥 📖`,
+        `드림님은 충분히 잘 하고 있다냥. 스스로를 칭찬해주라냥 🏆`,
+        `오늘 감사한 일 하나를 떠올려보라냥. 작은 것이라도 마음이 풍요로워진다냥 ✨`,
+        `오늘은 냠씨가 좋든 나쁘든, 드림님의 하루가 평화로웠으면 좋겠다냥 🌿`,
+        `혼자라고 느끼지 말라냥. 나는 항상 여기서 드림님을 응원하고 있다냥 💕`,
+        `오늘 잘 먹고 잘 자는 것도 중요하다냥. 몸이 건강해야 마음도 건강하다냥 😺`
+      ];
+      const newLetter = {
+        id: Date.now().toString(),
+        date: today,
+        content: catLetters[Math.floor(Math.random() * catLetters.length)],
+        isRead: false
+      };
+      existingLetters = [newLetter, ...existingLetters].slice(0, 30);
+      localStorage.setItem(LETTERS_KEY, JSON.stringify(existingLetters));
+    }
+    setLetters(existingLetters);
   }, []);
   const handleAnswerSelect = (score: Partial<Record<MoodType, number>>) => {
     const newScores = { ...testScores };
@@ -315,9 +348,8 @@ export default function Home() {
   };
 
   const generateCalendarDays = () => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = 5; // 6월 (0-indexed)
+    const year = calendarYear;
+    const month = calendarMonth;
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
@@ -545,7 +577,10 @@ export default function Home() {
     <div className="w-full md:max-w-[430px] md:h-[860px] flex flex-col relative bg-white font-sans overflow-hidden md:rounded-3xl md:shadow-2xl">
       {/* TOP BAR */}
       <header className="px-5 py-3.5 flex items-center justify-between border-b border-gray-100 bg-white z-10">
-        <button onClick={() => setIsMailOpen(true)} className="p-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-100"><Mail className="w-4 h-4 text-gray-600" /></button>
+        <button onClick={() => setIsMailOpen(true)} className="relative p-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-100">
+          <Mail className="w-4 h-4 text-gray-600" />
+          {letters.filter(l => !l.isRead).length > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center">{letters.filter(l => !l.isRead).length}</span>}
+        </button>
         <h1 className="text-lg font-black tracking-tight text-gray-800">MIND CAT DIARY</h1>
         <div className="flex gap-2">
           <button onClick={toggleMusic} className={`p-2 rounded-xl transition-all border ${isPlaying ? "bg-blue-50 border-blue-200 text-blue-600" : "bg-gray-50 border-gray-100 text-gray-600"}`}>
@@ -644,7 +679,11 @@ export default function Home() {
         {/* 달력 탭 */}
         {activeTab === "calendar" && (
           <div className="p-5 space-y-4 h-full overflow-y-auto">
-            <h2 className="text-lg font-black text-gray-800 text-center">2025년 6월</h2>
+            <div className="flex items-center justify-between">
+              <button onClick={() => { if (calendarMonth === 0) { setCalendarMonth(11); setCalendarYear(calendarYear - 1); } else { setCalendarMonth(calendarMonth - 1); } }} className="p-2 rounded-xl hover:bg-gray-100 transition-colors"><ChevronLeft className="w-4 h-4 text-gray-600" /></button>
+              <h2 className="text-lg font-black text-gray-800">{calendarYear}년 {calendarMonth + 1}월</h2>
+              <button onClick={() => { if (calendarMonth === 11) { setCalendarMonth(0); setCalendarYear(calendarYear + 1); } else { setCalendarMonth(calendarMonth + 1); } }} className="p-2 rounded-xl hover:bg-gray-100 transition-colors"><ChevronRight className="w-4 h-4 text-gray-600" /></button>
+            </div>
             <div className="grid grid-cols-7 gap-1">
               {["일", "월", "화", "수", "목", "금", "토"].map(day => (
                 <div key={day} className="text-center text-[10px] font-bold text-gray-400 py-1">{day}</div>
@@ -908,6 +947,44 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      {/* 편지함 모달 */}
+      {isMailOpen && (
+        <div className="absolute inset-0 bg-black/50 z-50 flex flex-col">
+          <div className="flex-1 flex flex-col bg-white overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
+              <h2 className="font-black text-gray-800 text-sm">📮 {catName}의 편지함</h2>
+              <button onClick={() => setIsMailOpen(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><X className="w-4 h-4 text-gray-500" /></button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-5 space-y-2">
+              {letters.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-4xl mb-2">📭</p>
+                  <p className="text-sm font-bold text-gray-500">아직 편지가 없다냥!</p>
+                  <p className="text-xs text-gray-400 font-bold mt-1">매일 감정냥이가 편지를 보내줄 거다냥 🐾</p>
+                </div>
+              ) : letters.map(letter => (
+                <div key={letter.id} className={`p-4 rounded-2xl border text-left transition-all ${letter.isRead ? "bg-white border-gray-100" : "bg-blue-50 border-blue-200"}`}>
+                  <div className="flex items-center gap-3">
+                    <img src={CAT_CHARACTERS[catMood].image} alt="" className="w-10 h-10 object-contain shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-black text-gray-800">{catName}의 편지</p>
+                        {!letter.isRead && <span className="w-2 h-2 bg-blue-500 rounded-full shrink-0"></span>}
+                      </div>
+                      <p className="text-[10px] text-gray-400 font-bold">{letter.date}</p>
+                      <p className="text-xs text-gray-600 font-bold mt-1 leading-relaxed">{letter.content}</p>
+                    </div>
+                  </div>
+                  {!letter.isRead && (
+                    <button onClick={() => { const updated = letters.map(l => l.id === letter.id ? { ...l, isRead: true } : l); setLetters(updated); localStorage.setItem('mindcat_cat_letters', JSON.stringify(updated)); }} className="mt-2 ml-13 text-[10px] font-bold text-blue-500 hover:text-blue-600">읽음 표시</button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* BOTTOM NAV */}
       <nav className="px-3 py-2.5 bg-white border-t border-gray-100 flex gap-1 justify-between shrink-0">
