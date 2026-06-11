@@ -519,30 +519,30 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* 헤더 */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="px-3 py-2 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">🐱</span>
+            <span className="text-xl">🐱</span>
             <div>
-              <h1 className="text-xl font-black text-gray-800">관리자 대시보드</h1>
+              <h1 className="text-base font-black text-gray-800">관리자 대시보드</h1>
               <p className="text-xs text-gray-500">마인드 캣 다이어리 관리 시스템</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full font-bold">
+            <span className="hidden sm:inline text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full font-bold">
               로그 {adminLogs.length}개
             </span>
             <button
               onClick={() => { localStorage.removeItem("mindcat_admin_logged_in"); window.location.href = "/"; }}
-              className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 transition-colors"
+              className="px-2 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-lg flex items-center gap-1 transition-colors"
             >
               <LogOut className="w-4 h-4" />
-              로그아웃
+              <span className="hidden sm:inline">로그아웃</span>
             </button>
           </div>
         </div>
 
         {/* 탭 네비게이션 */}
-        <div className="max-w-7xl mx-auto px-4 pb-0">
+        <div className="px-3 pb-0">
           <div className="flex gap-1 overflow-x-auto">
             {[
               { id: "content", label: "📝 콘텐츠" },
@@ -556,7 +556,7 @@ export default function AdminDashboard() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                className={`px-4 py-2.5 text-sm font-bold whitespace-nowrap border-b-2 transition-colors ${
+                className={`px-2 py-2 text-xs font-bold whitespace-nowrap border-b-2 transition-colors ${
                   activeTab === tab.id
                     ? "border-blue-500 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700"
@@ -569,7 +569,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+      <div className="px-3 py-4 space-y-4">
 
         {/* ===================== 콘텐츠 탭 ===================== */}
         {activeTab === "content" && (
@@ -577,7 +577,7 @@ export default function AdminDashboard() {
 
             {/* 감정 테스트 질문 */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-black text-gray-800 mb-4 flex items-center gap-2">
+              <h2 className="text-base font-black text-gray-800 mb-3 flex items-center gap-2">
                 ❓ 감정 테스트 질문 관리
                 <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">{questions.length}개</span>
               </h2>
@@ -633,11 +633,11 @@ export default function AdminDashboard() {
 
             {/* 캐릭터 관리 */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-black text-gray-800 mb-4 flex items-center gap-2">
+              <h2 className="text-base font-black text-gray-800 mb-3 flex items-center gap-2">
                 😺 캐릭터 관리
                 <span className="text-xs bg-pink-100 text-pink-700 px-2 py-0.5 rounded-full font-bold">{characters.length}개</span>
               </h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
+              <div className="grid grid-cols-2 gap-2 mb-3">
                 <input type="text" value={newCharacter.name || ""} onChange={e => setNewCharacter({ ...newCharacter, name: e.target.value })} placeholder="이름 *" className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-pink-400" />
                 <input type="text" value={newCharacter.emoji || ""} onChange={e => setNewCharacter({ ...newCharacter, emoji: e.target.value })} placeholder="이모지 (예: 😺)" className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-pink-400" />
                 <input type="text" value={newCharacter.description || ""} onChange={e => setNewCharacter({ ...newCharacter, description: e.target.value })} placeholder="설명" className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-pink-400" />
@@ -689,7 +689,7 @@ export default function AdminDashboard() {
 
             {/* 페이지 이름 관리 */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-black text-gray-800 mb-4">📄 페이지 이름 관리</h2>
+              <h2 className="text-base font-black text-gray-800 mb-3">📄 페이지 이름 관리</h2>
               <div className="flex gap-2 mb-3">
                 <input type="text" value={newPageKey} onChange={e => setNewPageKey(e.target.value)} placeholder="페이지 키 (예: shop)" className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-400" />
                 <input type="text" value={newPageLabel} onChange={e => setNewPageLabel(e.target.value)} placeholder="표시 이름 (예: 상점)" className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-400" />
@@ -719,7 +719,7 @@ export default function AdminDashboard() {
 
             {/* 온보딩 텍스트 관리 */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-black text-gray-800 mb-4">🎓 온보딩 튜토리얼 텍스트</h2>
+              <h2 className="text-base font-black text-gray-800 mb-3">🎓 온보딩 튜토리얼 텍스트</h2>
               <div className="flex gap-2 mb-3">
                 <input type="text" value={newOnboardingText} onChange={e => setNewOnboardingText(e.target.value)} onKeyDown={e => e.key === "Enter" && addOnboarding()} placeholder="새 온보딩 텍스트 입력..." className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-teal-400" />
                 <button onClick={addOnboarding} className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white text-sm font-bold rounded-lg flex items-center gap-1 transition-colors"><Plus className="w-4 h-4" /> 추가</button>
@@ -751,13 +751,13 @@ export default function AdminDashboard() {
         {/* ===================== 회원 탭 ===================== */}
         {activeTab === "users" && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-lg font-black text-gray-800 mb-4 flex items-center gap-2">
+            <h2 className="text-base font-black text-gray-800 mb-3 flex items-center gap-2">
               👥 회원 관리
               <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">{adminUsers.length}명</span>
             </h2>
 
             {/* 검색 및 필터 */}
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex flex-col sm:flex-row gap-2 mb-4">
               <div className="flex items-center gap-2 flex-1 min-w-48">
                 <Search className="w-4 h-4 text-gray-400" />
                 <input type="text" placeholder="회원 검색..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-400" />
@@ -824,7 +824,7 @@ export default function AdminDashboard() {
         {activeTab === "ads" && (
           <div className="space-y-6">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-black text-gray-800 mb-4">📢 광고 배너 관리</h2>
+              <h2 className="text-base font-black text-gray-800 mb-3">📢 광고 배너 관리</h2>
 
               {/* 배너 추가 */}
               <div className="space-y-2 mb-4 p-4 bg-orange-50 rounded-xl border border-orange-100">
@@ -876,7 +876,7 @@ export default function AdminDashboard() {
         {/* ===================== 음악 탭 ===================== */}
         {activeTab === "music" && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-lg font-black text-gray-800 mb-4">🎵 로파이 음악 관리</h2>
+            <h2 className="text-base font-black text-gray-800 mb-3">🎵 로파이 음악 관리</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {MUSIC_CHARS.map(({ key, label }) => (
                 <div key={key} className={`rounded-xl p-4 border ${musicFiles[key] ? "bg-purple-50 border-purple-200" : "bg-gray-50 border-gray-200"}`}>
@@ -907,7 +907,7 @@ export default function AdminDashboard() {
         {activeTab === "notifications" && (
           <div className="space-y-6">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-black text-gray-800 mb-4">📣 공지사항 발송</h2>
+              <h2 className="text-base font-black text-gray-800 mb-3">📣 공지사항 발송</h2>
               <div className="space-y-3 mb-4 p-4 bg-red-50 rounded-xl border border-red-100">
                 <div className="flex gap-2">
                   <input type="text" value={notificationTitle} onChange={e => setNotificationTitle(e.target.value)} placeholder="공지사항 제목 *" className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-red-400" />
@@ -948,7 +948,7 @@ export default function AdminDashboard() {
         {/* ===================== 변경 이력 탭 ===================== */}
         {activeTab === "history" && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-lg font-black text-gray-800 mb-4 flex items-center gap-2">
+            <h2 className="text-base font-black text-gray-800 mb-3 flex items-center gap-2">
               ↩️ 변경 이력
               <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full font-bold">{history.length}개</span>
             </h2>
@@ -984,7 +984,7 @@ export default function AdminDashboard() {
         {/* ===================== 로그 탭 ===================== */}
         {activeTab === "logs" && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-lg font-black text-gray-800 mb-4 flex items-center gap-2">
+            <h2 className="text-base font-black text-gray-800 mb-3 flex items-center gap-2">
               📋 관리자 활동 로그
               <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full font-bold">{filteredLogs.length}개</span>
             </h2>
