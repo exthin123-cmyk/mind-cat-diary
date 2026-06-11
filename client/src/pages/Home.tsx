@@ -937,6 +937,24 @@ export default function Home() {
         {activeTab === "admin" && (
           <div className="p-5 space-y-5">
             <div><h2 className="text-base font-bold text-gray-800">관리자 대시보드</h2><p className="text-xs text-gray-500">서비스 운영 현황 및 광고 링크 실시간 수정 패널냥 🛡️</p></div>
+            
+            {/* 게임 섹션 */}
+            {!isAdminLoggedIn && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="border-2 border-blue-300 rounded-2xl p-6 bg-gradient-to-br from-blue-50 to-blue-100 text-center cursor-pointer hover:shadow-lg transition-all">
+                  <div className="text-5xl mb-3">🧠</div>
+                  <h3 className="font-bold text-sm text-gray-800 mb-1">마인드 블럭</h3>
+                  <p className="text-[9px] text-gray-600 font-bold">동동동 마을 단련다냥 🌟</p>
+                  <button onClick={() => adminSettings.gameLinks.mindBlock && window.open(adminSettings.gameLinks.mindBlock, '_blank')} className="mt-3 w-full py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-lg">게임 시작</button>
+                </div>
+                <div className="border-2 border-purple-300 rounded-2xl p-6 bg-gradient-to-br from-purple-50 to-purple-100 text-center cursor-pointer hover:shadow-lg transition-all">
+                  <div className="text-5xl mb-3">🎵</div>
+                  <h3 className="font-bold text-sm text-gray-800 mb-1">음악 듯기</h3>
+                  <p className="text-[9px] text-gray-600 font-bold">로파이 음악으로 마음을 다루다냥 🎋</p>
+                  <button onClick={() => adminSettings.gameLinks.musicListen && window.open(adminSettings.gameLinks.musicListen, '_blank')} className="mt-3 w-full py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold text-xs rounded-lg">게임 시작</button>
+                </div>
+              </div>
+            )}
             {!isAdminLoggedIn ? (
               <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm space-y-4">
                 <h3 className="font-bold text-xs text-gray-700">관리자 비밀번호를 입력해달라냥 (기본: 123456)</h3>
