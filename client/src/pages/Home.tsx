@@ -578,8 +578,14 @@ export default function Home() {
     );
   }
 
+  // === 관리자 로그인 시 감정 테스트 건너뜀 ===
+  if (isAdminLoggedIn && (!isTestCompleted || activeQuestions.length === 0)) {
+    // 관리자는 감정 테스트 없이 바로 관리자 탭으로
+    if (activeTab !== "admin") setActiveTab("admin");
+  }
+
   // === 감정 테스트 화면 ===
-  if (!isTestCompleted || activeQuestions.length === 0) {
+  if (!isAdminLoggedIn && (!isTestCompleted || activeQuestions.length === 0)) {
     const q = activeQuestions[currentQuestionIndex] || QUESTION_BANK[0];
     return (
       <div className="flex-1 flex flex-col justify-between p-6 bg-white h-full overflow-y-auto">
@@ -610,37 +616,61 @@ export default function Home() {
     <div className="w-full h-screen md:max-w-[430px] md:h-[860px] flex flex-col relative bg-white font-sans overflow-hidden md:rounded-3xl md:shadow-2xl">
       {/* TOP BAR */}
       <header className="px-5 py-3.5 flex items-center justify-between border-b border-gray-100 bg-white z-10">
-        <button onClick={() => setIsMailOpen(true)} className="relative p-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-100">
-          <Mail className="w-4 h-4 text-gray-600" />
-          {letters.filter(l => !l.isRead).length > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center">{letters.filter(l => !l.isRead).length}</span>}
-        </button>
-        <h1 className="text-lg font-black tracking-tight text-gray-800">MIND CAT DIARY</h1>
-        <div className="flex gap-2">
-          <button onClick={toggleMusic} className={`p-2 rounded-xl transition-all border ${isPlaying ? "bg-blue-50 border-blue-200 text-blue-600" : "bg-gray-50 border-gray-100 text-gray-600"}`}>
-            <Music className={`w-4 h-4 ${isPlaying ? "animate-spin" : ""}`} />
-          </button>
-          <button onClick={() => {
-            localStorage.removeItem(STORAGE_KEYS.currentUser);
-            setAuthView("landing");
-            setUserName("드림님");
-            setCatName("드림이");
-            setCatMood("unfair");
-            setCollectedCats(["unfair"]);
-            setIsTestCompleted(false);
-            setIsAdminLoggedIn(false);
-            if (isAuthenticated) logout();
-            toast.success("로그아웃 됐다냥!");
-          }} className="p-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-100 text-xs font-bold text-gray-600">로그아웃</button>
-        </div>
+        {isAdminLoggedIn ? (
+          // 관리자 전용 헤더
+          <>
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🛡️</span>
+              <div>
+                <h1 className="text-sm font-black tracking-tight text-gray-800">MIND CAT DIARY</h1>
+                <p className="text-[9px] text-blue-600 font-bold">관리자 모드</p>
+              </div>
+            </div>
+            <button onClick={() => {
+              setIsAdminLoggedIn(false);
+              setActiveTab("room");
+              setAuthView("landing");
+              toast.success("관리자 로그아웃!");
+            }} className="px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 transition-colors border border-red-200 text-xs font-bold text-red-600">로그아웃</button>
+          </>
+        ) : (
+          // 일반 사용자 헤더
+          <>
+            <button onClick={() => setIsMailOpen(true)} className="relative p-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-100">
+              <Mail className="w-4 h-4 text-gray-600" />
+              {letters.filter(l => !l.isRead).length > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center">{letters.filter(l => !l.isRead).length}</span>}
+            </button>
+            <h1 className="text-lg font-black tracking-tight text-gray-800">MIND CAT DIARY</h1>
+            <div className="flex gap-2">
+              <button onClick={toggleMusic} className={`p-2 rounded-xl transition-all border ${isPlaying ? "bg-blue-50 border-blue-200 text-blue-600" : "bg-gray-50 border-gray-100 text-gray-600"}`}>
+                <Music className={`w-4 h-4 ${isPlaying ? "animate-spin" : ""}`} />
+              </button>
+              <button onClick={() => {
+                localStorage.removeItem(STORAGE_KEYS.currentUser);
+                setAuthView("landing");
+                setUserName("드림님");
+                setCatName("드림이");
+                setCatMood("unfair");
+                setCollectedCats(["unfair"]);
+                setIsTestCompleted(false);
+                setIsAdminLoggedIn(false);
+                if (isAuthenticated) logout();
+                toast.success("로그아웃 됐다냥!");
+              }} className="p-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-100 text-xs font-bold text-gray-600">로그아웃</button>
+            </div>
+          </>
+        )}
       </header>
 
-      {/* TOP STATUS BAR */}
-      <div className="px-5 py-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          {isAuthenticated && <span className="text-[9px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-bold">로그인됨</span>}
-          {isPremium && <span className="text-[9px] bg-amber-500 text-white px-1.5 py-0.5 rounded font-bold">프리미엄</span>}
+      {/* TOP STATUS BAR - 관리자 로그인 시 숨김 */}
+      {!isAdminLoggedIn && (
+        <div className="px-5 py-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            {isAuthenticated && <span className="text-[9px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-bold">로그인됨</span>}
+            {isPremium && <span className="text-[9px] bg-amber-500 text-white px-1.5 py-0.5 rounded font-bold">프리미엄</span>}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* MAIN CONTENT */}
       <main className="flex-1 overflow-y-auto bg-white relative">
