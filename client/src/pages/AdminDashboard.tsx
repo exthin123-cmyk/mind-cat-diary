@@ -81,6 +81,8 @@ const STORAGE_KEYS = {
   history: "mindcat_admin_history",
   pageNames: "mindcat_page_names",
   onboarding: "mindcat_onboarding_texts",
+  // Home.tsx와 공유하는 키 (일반 화면에 반영됨)
+  adminSettings: "mindcat_admin_settings",
 };
 
 const DEFAULT_PAGE_NAMES: PageName[] = [
@@ -115,6 +117,14 @@ export default function AdminDashboard() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [pageNames, setPageNames] = useState<PageName[]>(DEFAULT_PAGE_NAMES);
   const [onboardingTexts, setOnboardingTexts] = useState<string[]>(DEFAULT_ONBOARDING);
+
+  // --- 일반 화면 연동 설정 (Home.tsx와 공유) ---
+  const [adminSettings, setAdminSettings] = useState({
+    pageNames: { home: "홈", chat: "대화", diary: "일기", calendar: "달력", community: "마음 숲", report: "리포트", dex: "도감" },
+    gameLinks: { mindBlock: "", musicListen: "" },
+    ads: { bannerText: "상담이 필요하신가요?", bannerLink: "" },
+    adminPassword: "123456"
+  });
 
   // --- 폼 상태: 질문 ---
   const [newQuestion, setNewQuestion] = useState("");
@@ -175,6 +185,12 @@ export default function AdminDashboard() {
     setHistory(load(STORAGE_KEYS.history, []));
     setPageNames(load(STORAGE_KEYS.pageNames, DEFAULT_PAGE_NAMES));
     setOnboardingTexts(load(STORAGE_KEYS.onboarding, DEFAULT_ONBOARDING));
+    setAdminSettings(load(STORAGE_KEYS.adminSettings, {
+      pageNames: { home: "홈", chat: "대화", diary: "일기", calendar: "달력", community: "마음 숲", report: "리포트", dex: "도감" },
+      gameLinks: { mindBlock: "", musicListen: "" },
+      ads: { bannerText: "상담이 필요하신가요?", bannerLink: "" },
+      adminPassword: "123456"
+    }));
   }, []);
 
   // --- 로그 저장 ---
@@ -743,6 +759,87 @@ export default function AdminDashboard() {
                     )}
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ===================== 게임/광고 설정 (콘텐츠 탭 하단) ===================== */}
+        {activeTab === "content" && (
+          <div className="space-y-4">
+            {/* 게임 링크 관리 */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+              <h2 className="text-base font-black text-gray-800 mb-3">🎮 게임 링크 관리</h2>
+              <p className="text-xs text-green-600 font-bold mb-3 bg-green-50 px-2 py-1 rounded">✅ 저장하면 일반 사용자 화면에 즉시 반영됩니다</p>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-600 mb-1 block">🧠 마인드 블럭 링크</label>
+                  <input
+                    type="url"
+                    value={adminSettings.gameLinks.mindBlock}
+                    onChange={e => setAdminSettings({ ...adminSettings, gameLinks: { ...adminSettings.gameLinks, mindBlock: e.target.value } })}
+                    placeholder="https://example.com/mindblock"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-600 mb-1 block">🎵 음악 듣기 링크</label>
+                  <input
+                    type="url"
+                    value={adminSettings.gameLinks.musicListen}
+                    onChange={e => setAdminSettings({ ...adminSettings, gameLinks: { ...adminSettings.gameLinks, musicListen: e.target.value } })}
+                    placeholder="https://example.com/music"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    localStorage.setItem(STORAGE_KEYS.adminSettings, JSON.stringify(adminSettings));
+                    addLog("게임 링크 저장", "게임 링크가 업데이트됨", "content");
+                    toast.success("게임 링크가 저장되었다냥! 🎮 일반 화면에 반영됩니다!");
+                  }}
+                  className="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-colors"
+                >
+                  <Save className="w-4 h-4" /> 저장 (일반 화면에 반영)
+                </button>
+              </div>
+            </div>
+
+            {/* 광고 문구 관리 */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+              <h2 className="text-base font-black text-gray-800 mb-3">📣 광고 문구 관리</h2>
+              <p className="text-xs text-green-600 font-bold mb-3 bg-green-50 px-2 py-1 rounded">✅ 저장하면 일반 사용자 화면에 즉시 반영됩니다</p>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-600 mb-1 block">배너 문구</label>
+                  <input
+                    type="text"
+                    value={adminSettings.ads.bannerText}
+                    onChange={e => setAdminSettings({ ...adminSettings, ads: { ...adminSettings.ads, bannerText: e.target.value } })}
+                    placeholder="상담이 필요하신가요?"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-600 mb-1 block">배너 링크 URL</label>
+                  <input
+                    type="url"
+                    value={adminSettings.ads.bannerLink}
+                    onChange={e => setAdminSettings({ ...adminSettings, ads: { ...adminSettings.ads, bannerLink: e.target.value } })}
+                    placeholder="https://example.com/counseling"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    localStorage.setItem(STORAGE_KEYS.adminSettings, JSON.stringify(adminSettings));
+                    addLog("광고 문구 저장", adminSettings.ads.bannerText, "ad");
+                    toast.success("광고 문구가 저장되었다냥! 📣 일반 화면에 반영됩니다!");
+                  }}
+                  className="w-full px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-colors"
+                >
+                  <Save className="w-4 h-4" /> 저장 (일반 화면에 반영)
+                </button>
               </div>
             </div>
           </div>
