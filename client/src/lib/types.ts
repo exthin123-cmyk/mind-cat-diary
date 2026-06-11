@@ -494,7 +494,6 @@ export interface Message {
 export interface FeedPost {
   id: string;
   author: string;
-  authorLevel: number;
   avatar: string;
   content: string;
   likes: number;

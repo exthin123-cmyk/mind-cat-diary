@@ -25,9 +25,6 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// Mind Cat Diary 전용 필드 (users 테이블에 추가 컬럼)
-// 이 필드들은 users 테이블에 직접 추가하는 대신 별도 profile 테이블로 관리합니다.
-
 // 사용자 프로필 테이블 (Mind Cat Diary 전용)
 export const userProfiles = mysqlTable("user_profiles", {
   id: int("id").autoincrement().primaryKey(),
@@ -35,9 +32,6 @@ export const userProfiles = mysqlTable("user_profiles", {
   nickname: varchar("nickname", { length: 100 }).default("드림님"),
   catName: varchar("catName", { length: 100 }).default("드림이"),
   catMood: varchar("catMood", { length: 50 }).default("unfair"),
-  level: int("level").default(1).notNull(),
-  exp: int("exp").default(0).notNull(),
-  apples: int("apples").default(5).notNull(),
   isPremium: int("isPremium").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -73,3 +67,59 @@ export const chatMessages = mysqlTable("chat_messages", {
 
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertChatMessage = typeof chatMessages.$inferInsert;
+
+// 관리자 설정 테이블
+export const adminSettings = mysqlTable("admin_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  adminPassword: varchar("adminPassword", { length: 255 }).notNull(),
+  adBannerText: text("adBannerText"),
+  adBannerLink: varchar("adBannerLink", { length: 500 }),
+  mindBlockLink: varchar("mindBlockLink", { length: 500 }),
+  musicGameLink: varchar("musicGameLink", { length: 500 }),
+  pageNameChat: varchar("pageNameChat", { length: 100 }).default("대화"),
+  pageNameCalendar: varchar("pageNameCalendar", { length: 100 }).default("달력"),
+  pageNameCommunity: varchar("pageNameCommunity", { length: 100 }).default("커뮤니티"),
+  pageNameDex: varchar("pageNameDex", { length: 100 }).default("도감"),
+  pageNameReport: varchar("pageNameReport", { length: 100 }).default("리포트"),
+  pageNameGame: varchar("pageNameGame", { length: 100 }).default("게임"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AdminSettings = typeof adminSettings.$inferSelect;
+export type InsertAdminSettings = typeof adminSettings.$inferInsert;
+
+// 커뮤니티 피드 테이블
+export const feedPosts = mysqlTable("feed_posts", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  content: text("content").notNull(),
+  likes: int("likes").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type FeedPost = typeof feedPosts.$inferSelect;
+export type InsertFeedPost = typeof feedPosts.$inferInsert;
+
+// 피드 댓글 테이블
+export const feedComments = mysqlTable("feed_comments", {
+  id: int("id").autoincrement().primaryKey(),
+  postId: int("postId").notNull(),
+  userId: int("userId").notNull(),
+  text: text("text").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type FeedComment = typeof feedComments.$inferSelect;
+export type InsertFeedComment = typeof feedComments.$inferInsert;
+
+// 수집된 고양이 테이블 (도감)
+export const collectedCats = mysqlTable("collected_cats", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  catMood: varchar("catMood", { length: 50 }).notNull(),
+  collectedAt: timestamp("collectedAt").defaultNow().notNull(),
+});
+
+export type CollectedCat = typeof collectedCats.$inferSelect;
+export type InsertCollectedCat = typeof collectedCats.$inferInsert;

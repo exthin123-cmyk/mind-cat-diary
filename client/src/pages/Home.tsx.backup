@@ -9,7 +9,7 @@ import {
   UserPlus, BarChart2, BookOpen, Share2, Copy, Check
 } from "lucide-react";
 import { toast } from "sonner";
-import { MoodType, CAT_CHARACTERS, ScheduleEvent, FeedPost, QUESTION_BANK } from "../lib/types";
+import { MoodType, CAT_CHARACTERS, SHOP_ITEMS, ShopItem, ScheduleEvent, FeedPost, QUESTION_BANK } from "../lib/types";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis } from "recharts";
 import Dex from "./Dex";
 
@@ -70,7 +70,13 @@ export default function Home() {
   const [catMood, setCatMood] = useState<MoodType>("unfair");
   const [userName, setUserName] = useState("드림님");
   const [catName, setCatName] = useState("드림이");
+  const [level, setLevel] = useState(1);
+  const [exp, setExp] = useState(20);
+  const maxExp = 100;
+  const [apples, setApples] = useState(5);
   const [isPremium, setIsPremium] = useState(false);
+  const [isLevelUpGlowing, setIsLevelUpGlowing] = useState(false);
+  const [isLevelUpModalOpen, setIsLevelUpModalOpen] = useState(false);
 
   // --- 온보딩 튜토리얼 ---
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
@@ -121,6 +127,15 @@ export default function Home() {
     }
   ];
 
+  // --- 일일 미션 시스템 ---
+  const [dailyMissions, setDailyMissions] = useState([
+    { id: "m1", icon: "💬", title: "냥이와 대화하기",    desc: "오늘 냥이에게 메시지를 1개 이상 보내기",  reward: 2, done: false },
+    { id: "m2", icon: "📖", title: "마음 일기 쓰기",     desc: "오늘의 감정과 감사 일기를 한 편 작성하기",  reward: 3, done: false },
+    { id: "m3", icon: "🌳", title: "커뮤니티 소통하기", desc: "마음 숲 피드에 댓글을 1개 이상 달기",       reward: 1, done: false },
+    { id: "m4", icon: "🐾", title: "냥이 쓰다듬기",     desc: "고양이 방에서 냥이를 터치하기",             reward: 1, done: false },
+    { id: "m5", icon: "🏠", title: "방 꾸미기",          desc: "소품 상점에서 아이템을 방에 배치하기",      reward: 2, done: false },
+  ]);
+  const [isMissionOpen, setIsMissionOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
   // 공유하기 함수 (Web Share API + 클립보드 폴백)
@@ -150,9 +165,28 @@ export default function Home() {
     }
   };
 
+  // 미션 완료 처리 함수
+  const completeMission = (missionId: string) => {
+    setDailyMissions(prev => prev.map(m => {
+      if (m.id === missionId && !m.done) {
+        setApples(a => {
+          const newVal = a + m.reward;
+          toast.success(`미션 완료! 사과 🍎 ${m.reward}개를 획득했다냥!`);
+          return newVal;
+        });
+        gainExp(10, `미션: ${m.title}`);
+        return { ...m, done: true };
+      }
+      return m;
+    }));
+  };
 
-
-
+  // --- 꾸미기 ---
+  const [myItems, setMyItems] = useState<string[]>(["f3"]);
+  const [equippedItems, setEquippedItems] = useState<string[]>(["f3"]);
+  const [currentWallpaper, setCurrentWallpaper] = useState<string>("default");
+  const [isShopOpen, setIsShopOpen] = useState(false);
+  const [isStoreOpen, setIsStoreOpen] = useState(false);
 
   // --- 음악 ---
   const [isPlaying, setIsPlaying] = useState(false);
@@ -214,24 +248,13 @@ export default function Home() {
   const [isCommunityWriteOpen, setIsCommunityWriteOpen] = useState(false);
   const [newPostText, setNewPostText] = useState("");
   const [feedPosts, setFeedPosts] = useState<FeedPost[]>([
-    { id: "p1", author: "냥이집사3호", avatar: "/manus-storage/unfair_cat_bb093496.png", content: "오늘 드림이랑 대화하다가 레벨업했어냥! 사과 3개 받아서 바로 선글라스 사줬는데 너무 힙하고 귀엽지 않냐냥? 😎🍎", likes: 12, likedByMe: false, comments: [{ id: "c1", author: "초보집사", text: "우와 부럽다냥! 선글라스 너무 잘 어울린다냥!", date: "10분 전" }], date: "30분 전", hasBestBadge: true },
-    { id: "p2", author: "행복한하루", avatar: "/manus-storage/lonely_cat_dbdd7a45.png", content: "달력에 감사일기 매일 쓰니까 마음이 한결 편안해지는 것 같다냥. 🌸✨", likes: 8, likedByMe: true, comments: [{ id: "c3", author: "냥이집사3호", text: "맞아요냥! 마음의 숲을 가꾸는 느낌이다냥.", date: "15분 전" }], date: "1시간 전", hasBestBadge: false }
+    { id: "p1", author: "냥이집사3호", authorLevel: 5, avatar: "/manus-storage/unfair_cat_bb093496.png", content: "오늘 드림이랑 대화하다가 레벨업했어냥! 사과 3개 받아서 바로 선글라스 사줬는데 너무 힙하고 귀엽지 않냐냥? 😎🍎", likes: 12, likedByMe: false, comments: [{ id: "c1", author: "초보집사", text: "우와 부럽다냥! 선글라스 너무 잘 어울린다냥!", date: "10분 전" }], date: "30분 전", hasBestBadge: true },
+    { id: "p2", author: "행복한하루", authorLevel: 3, avatar: "/manus-storage/lonely_cat_dbdd7a45.png", content: "달력에 감사일기 매일 쓰니까 마음이 한결 편안해지는 것 같다냥. 🌸✨", likes: 8, likedByMe: true, comments: [{ id: "c3", author: "냥이집사3호", text: "맞아요냥! 마음의 숲을 가꾸는 느낌이다냥.", date: "15분 전" }], date: "1시간 전", hasBestBadge: false }
   ]);
 
   // --- 관리자 ---
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [adminPassword, setAdminPassword] = useState("");
-  const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
-  const ADMIN_PASSWORD = "123456";
-  const [adminLoginInput, setAdminLoginInput] = useState("");
-  const [newAdminPassword, setNewAdminPassword] = useState("");
-  const [confirmAdminPassword, setConfirmAdminPassword] = useState("");
-  const [adminSettings, setAdminSettings] = useState({
-    adText: "",
-    adLink: "",
-    gameLinks: { mindBlock: "", musicListen: "" },
-    pageNames: { home: "", chat: "", diary: "", calendar: "", community: "", report: "", dex: "" }
-  });
   const [isMailOpen, setIsMailOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [adText, setAdText] = useState("🍎 맛있는 유기농 청송 사과 1+1 한정 특가 세일!");
@@ -292,7 +315,9 @@ export default function Home() {
       if (p.nickname) setUserName(p.nickname);
       if (p.catName) setCatName(p.catName);
       if (p.catMood) setCatMood(p.catMood as MoodType);
-
+      if (p.level) setLevel(p.level);
+      if (p.exp !== undefined) setExp(p.exp);
+      if (p.apples !== undefined) setApples(p.apples);
       if (p.isPremium) setIsPremium(!!p.isPremium);
       if (authView === "landing") { setAuthView("app"); setIsTestCompleted(true); }
     }
@@ -302,7 +327,21 @@ export default function Home() {
     if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-
+  // 결제 성공 처리
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("payment") === "success") {
+      const productId = params.get("product") || "";
+      let newApples = apples;
+      if (productId === "apple_small") { newApples += 10; toast.success("사과 10개가 충전되었다냥! 🍎"); }
+      else if (productId === "apple_medium") { newApples += 30; toast.success("사과 30개가 충전되었다냥! 🍎🍎🍎"); }
+      else if (productId === "apple_large") { newApples += 100; toast.success("사과 100개가 충전되었다냥! 🎁"); }
+      else if (productId === "premium_monthly") { setIsPremium(true); newApples += 50; toast.success("프리미엄 집사 멤버십이 활성화되었다냥! 👑"); }
+      setApples(newApples);
+      if (isAuthenticated) updateProfileMutation.mutate({ apples: newApples, isPremium: productId === "premium_monthly" ? 1 : undefined });
+      window.history.replaceState({}, "", "/");
+    }
+  }, []);
 
   // 음악 재생
   useEffect(() => {
@@ -319,7 +358,30 @@ export default function Home() {
     else { audioRef.current.play().then(() => { setIsPlaying(true); toast.success(`🎶 현재 재생중: ${currentMusic.title}`); }).catch(() => toast.error("음악 재생에 실패했다냥!")); }
   };
 
-
+  // 경험치 획득
+  const gainExp = (amount: number, actionType: string) => {
+    setExp(prev => {
+      const nextExp = prev + amount;
+      if (nextExp >= maxExp) {
+        setIsLevelUpGlowing(true);
+        setTimeout(() => setIsLevelUpGlowing(false), 3000);
+        setLevel(l => {
+          const nextLvl = l + 1;
+          setApples(a => {
+            const newApples = a + 3;
+            if (isAuthenticated) updateProfileMutation.mutate({ level: nextLvl, exp: nextExp - maxExp, apples: newApples });
+            return newApples;
+          });
+          setIsLevelUpModalOpen(true);
+          return nextLvl;
+        });
+        return nextExp - maxExp;
+      }
+      toast.info(`🐾 ${actionType} 완료! EXP +${amount} 획득했다냥.`);
+      if (isAuthenticated) updateProfileMutation.mutate({ exp: nextExp });
+      return nextExp;
+    });
+  };
 
   // 심리테스트
   const handleAnswerSelect = (score: Partial<Record<MoodType, number>>) => {
@@ -344,7 +406,9 @@ export default function Home() {
       if (isAuthenticated) updateProfileMutation.mutate({ catMood: selectedCat });
       toast.success(`🎉 심리테스트 완료! [${CAT_CHARACTERS[selectedCat].name}]가 매칭되었다냥!`);
       // 레벨 조건에 따른 추가 냥이 해금
-
+      if (level >= 3 && !collectedCats.includes("shocked")) setCollectedCats(prev => [...prev, "shocked"]);
+      if (level >= 5 && !collectedCats.includes("excited")) setCollectedCats(prev => [...prev, "excited"]);
+      if (level >= 7 && !collectedCats.includes("proud")) setCollectedCats(prev => [...prev, "proud"]);
     }
   };
 
@@ -356,7 +420,7 @@ export default function Home() {
     const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     setMessages(prev => [...prev, { id: Date.now().toString(), sender: "user", text: userText, timestamp: timeStr }]);
     setChatInput("");
-
+    gainExp(15, "냥이와 대화하기");
 
     if (isAuthenticated) {
       // 실제 AI 대화 (GPT)
@@ -412,7 +476,7 @@ export default function Home() {
       const fallback = generateDiarySolution(inputTitle, inputMood, inputThanks);
       solution = fallback.tip;
       musicRecommendation = LOFI_PLAYLIST[fallback.music]?.title || LOFI_PLAYLIST.default.title;
-
+      gainExp(30, "마음 일기 작성");
     }
 
     setLocalEvents(prev => [...prev, {
@@ -436,7 +500,37 @@ export default function Home() {
   };
 
   // 상점 아이템 구매
+  const handleBuyItem = (item: ShopItem) => {
+    if (myItems.includes(item.id)) {
+      if (equippedItems.includes(item.id)) {
+        setEquippedItems(prev => prev.filter(id => id !== item.id));
+        if (item.category === "wallpaper") setCurrentWallpaper("default");
+        toast.info(`${item.name} 장착을 해제했다냥.`);
+      } else {
+        if (item.category === "wallpaper") { setEquippedItems(prev => [...prev.filter(id => SHOP_ITEMS.find(si => si.id === id)?.category !== "wallpaper"), item.id]); setCurrentWallpaper(item.id); }
+        else setEquippedItems(prev => [...prev, item.id]);
+        toast.success(`${item.name}을(를) 방에 장착했다냥! 🛋️`);
+        completeMission("m5"); // 방 꾸미기 미션 자동 완료
+      }
+    } else {
+      if (apples < item.price) { toast.error("사과가 부족하다냥! 상점에서 사과를 충전하거나 레벨업 보상을 받아오라냥 🍎"); return; }
+      setApples(prev => { const newVal = prev - item.price; if (isAuthenticated) updateProfileMutation.mutate({ apples: newVal }); return newVal; });
+      setMyItems(prev => [...prev, item.id]);
+      setEquippedItems(prev => [...prev, item.id]);
+      if (item.category === "wallpaper") setCurrentWallpaper(item.id);
+      toast.success(`${item.name}을(를) 구매해 방에 장착했다냥! 🎉`);
+    }
+  };
 
+  // Stripe 결제
+  const handleStripeCheckout = async (productId: string) => {
+    if (!isAuthenticated) { toast.error("결제를 진행하려면 로그인이 필요하다냥!"); window.location.href = getLoginUrl(); return; }
+    try {
+      toast.info("결제 페이지로 이동한다냥... 🍎");
+      const result = await createCheckout.mutateAsync({ productId, origin: window.location.origin });
+      if (result.url) window.open(result.url, "_blank");
+    } catch { toast.error("결제 세션 생성에 실패했다냥. 잠시 후 다시 시도해달라냥!"); }
+  };
 
   // 커뮤니티
   const handleLikePost = (postId: string) => setFeedPosts(prev => prev.map(post => post.id === postId ? { ...post, likes: post.likedByMe ? post.likes - 1 : post.likes + 1, likedByMe: !post.likedByMe } : post));
@@ -458,12 +552,14 @@ export default function Home() {
   const handleAddComment = (postId: string, text: string) => {
     if (!text.trim()) return;
     setFeedPosts(prev => prev.map(post => post.id === postId ? { ...post, comments: [...post.comments, { id: Date.now().toString(), author: userName, text: `${text}냥!`, date: "방금 전" }] } : post));
+    gainExp(10, "커뮤니티 소통");
   };
   const handleCreatePost = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPostText.trim()) return;
-    setFeedPosts([{ id: Date.now().toString(), author: userName, avatar: CAT_CHARACTERS[catMood].image, content: `${newPostText}냥!`, likes: 0, likedByMe: false, comments: [], date: "방금 전" }, ...feedPosts]);
+    setFeedPosts([{ id: Date.now().toString(), author: userName, authorLevel: level, avatar: CAT_CHARACTERS[catMood].image, content: `${newPostText}냥!`, likes: 0, likedByMe: false, comments: [], date: "방금 전", hasBestBadge: level >= 3 }, ...feedPosts]);
     setNewPostText(""); setIsCommunityWriteOpen(false);
+    gainExp(25, "커뮤니티 피드 작성");
     toast.success("마음 숲 피드에 글을 등록했다냥! 🌳📸");
   };
 
@@ -489,6 +585,10 @@ export default function Home() {
   };
 
   const getRoomBg = () => {
+    if (currentWallpaper === "w1") return "bg-[#ECFDF5] border-2 border-emerald-100";
+    if (currentWallpaper === "w2") return "bg-[#0F172A] text-white border-2 border-slate-800";
+    if (currentWallpaper === "w3") return "bg-[#FFF1F2] border-2 border-pink-100";
+    if (currentWallpaper === "w4") return "bg-[#F0F9FF] border-2 border-blue-100";
     return "bg-[#FAF8F5] border border-gray-100";
   };
 
@@ -559,7 +659,7 @@ export default function Home() {
         </div>
         <button onClick={() => {
           if (!signupNickname.trim()) { toast.error("닉네임을 입력해달라냥!"); return; }
-          setUserName(signupNickname); setCatName(signupCatName); setAuthView("app"); setIsTestCompleted(false);
+          setUserName(signupNickname); setCatName(signupCatName); setApples(5); setAuthView("app"); setIsTestCompleted(false);
           toast.success(`환영한다냥, ${signupNickname}님! 사과 🍎 5개를 선물로 드린다냥!`);
         }} className="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm rounded-2xl transition-colors shadow-md mt-6">가입하고 심리테스트 시작하기냥 🐾</button>
       </div>
@@ -595,7 +695,11 @@ export default function Home() {
   // === 메인 앱 ===
   return (
     <div className="flex-1 flex flex-col relative h-full bg-white font-sans overflow-hidden">
-
+      {isLevelUpGlowing && (
+        <div className="absolute inset-0 bg-blue-500/10 pointer-events-none z-50 animate-pulse flex items-center justify-center">
+          <div className="text-3xl animate-bounce">✨💖✨</div>
+        </div>
+      )}
 
       {/* TOP BAR */}
       <header className="px-5 py-3.5 flex items-center justify-between border-b border-gray-100 bg-white z-10">
@@ -613,11 +717,19 @@ export default function Home() {
         </div>
       </header>
 
-      {/* TOP STATUS BAR */}
+      {/* LEVEL & EXP BAR */}
       <div className="px-5 py-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          {isAuthenticated && <span className="text-[9px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-bold">로그인됨</span>}
-          {isPremium && <span className="text-[9px] bg-amber-500 text-white px-1.5 py-0.5 rounded font-bold">프리미엄</span>}
+          <div className="bg-gray-800 text-white text-[10px] font-black px-2 py-0.5 rounded-full">Lv.{level}</div>
+          <div className="w-28 h-2 bg-gray-200 rounded-full overflow-hidden"><div className="h-full bg-blue-500 transition-all duration-300" style={{ width: `${(exp / maxExp) * 100}%` }}></div></div>
+          <span className="text-[10px] font-bold text-gray-400">{exp}/{maxExp}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {isAuthenticated && <span className="text-[9px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-bold">🔐 로그인됨</span>}
+          {isPremium && <span className="text-[9px] bg-amber-500 text-white px-1.5 py-0.5 rounded font-bold">👑 프리미엄</span>}
+          <button onClick={() => setIsStoreOpen(true)} className="flex items-center gap-1 bg-white px-2.5 py-1 rounded-full border border-gray-200 shadow-sm hover:bg-gray-50">
+            <span className="text-xs">🍎</span><span className="font-bold text-xs text-gray-700">{apples}개</span><Plus className="w-3 h-3 text-blue-500" />
+          </button>
         </div>
       </div>
 
@@ -638,9 +750,32 @@ export default function Home() {
 
             <div className={`flex-1 min-h-[280px] max-h-[340px] rounded-3xl relative overflow-hidden flex flex-col items-center justify-center p-6 shadow-inner ${getRoomBg()}`} style={{marginBottom: '26px', marginTop: '-39px', paddingRight: '26px'}}>
               <div className="absolute inset-0 pointer-events-none">
+                {equippedItems.map(itemId => {
+                  const item = SHOP_ITEMS.find(si => si.id === itemId);
+                  if (!item) return null;
+                  if (item.category === "furniture") {
+                    if (item.id === "f1") return <div key={item.id} className="absolute left-6 bottom-10 text-5xl">🐈‍⬛🗼</div>;
+                    if (item.id === "f2") return <div key={item.id} className="absolute left-1/2 -translate-x-1/2 bottom-2 text-6xl opacity-80">🧶</div>;
+                    if (item.id === "f3") return <div key={item.id} className="absolute right-8 bottom-8 text-4xl">🐟</div>;
+                    if (item.id === "f4") return <div key={item.id} className="absolute left-6 bottom-4 text-5xl">⛺</div>;
+                    if (item.id === "f5") return <div key={item.id} className="absolute right-6 bottom-4 text-4xl">🥛</div>;
+                    if (item.id === "f6") return <div key={item.id} className="absolute left-1/2 -translate-x-1/2 bottom-12 text-5xl z-20">🛋️</div>;
+                    if (item.id === "f7") return <div key={item.id} className="absolute right-12 bottom-12 text-4xl">🪵</div>;
+                  }
+                  if (item.category === "accessory") {
+                    if (item.id === "a1") return <div key={item.id} className="absolute left-1/2 -translate-x-1/2 top-8 text-3xl z-30 animate-pulse">🌸</div>;
+                    if (item.id === "a2") return <div key={item.id} className="absolute left-1/2 -translate-x-1/2 top-6 text-3xl z-30">🎀</div>;
+                    if (item.id === "a3") return <div key={item.id} className="absolute left-1/2 -translate-x-1/2 top-4 text-3xl z-30">🕶️</div>;
+                    if (item.id === "a4") return <div key={item.id} className="absolute left-1/2 -translate-x-1/2 top-2 text-3xl z-30 animate-bounce">👑</div>;
+                    if (item.id === "a5") return <div key={item.id} className="absolute left-1/2 -translate-x-1/2 top-4 text-3xl z-30">👓</div>;
+                    if (item.id === "a6") return <div key={item.id} className="absolute left-1/2 -translate-x-1/2 top-3 text-3xl z-30">🧙</div>;
+                    if (item.id === "a7") return <div key={item.id} className="absolute left-1/2 -translate-x-1/2 top-6 text-3xl z-0 animate-pulse">👼</div>;
+                  }
+                  return null;
+                })}
               </div>
 
-              <div className="relative z-10 flex flex-col items-center cursor-pointer group" onClick={() => { playMeow(); setBubbleText(`나를 터치해줘서 고맙다냥! [${CAT_CHARACTERS[catMood].name}]인 나는 언제나 드림님 편이다냥! 💕`); }}>
+              <div className="relative z-10 flex flex-col items-center cursor-pointer group" onClick={() => { playMeow(); setBubbleText(`나를 터치해줘서 고맙다냥! [${CAT_CHARACTERS[catMood].name}]인 나는 언제나 드림님 편이다냥! 💕`); gainExp(5, "고양이 교감"); completeMission("m4"); }}>
                 <div className="bg-gray-800 text-white text-[10px] font-bold px-3 py-0.5 rounded-full whitespace-nowrap border border-gray-700 shadow-sm mb-2 z-20">
                   {catName} ({CAT_CHARACTERS[catMood].name.split(" ")[0]})
                 </div>
@@ -649,9 +784,76 @@ export default function Home() {
               </div>
             </div>
 
+            {/* 일일 미션 패널 */}
+            <div className="space-y-2">
+              <button
+                onClick={() => setIsMissionOpen(prev => !prev)}
+                className="w-full flex items-center justify-between px-4 py-2.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-2xl transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">🍎</span>
+                  <span className="text-xs font-black text-amber-700">일일 미션</span>
+                  <span className="text-[9px] bg-amber-500 text-white px-1.5 py-0.5 rounded-full font-bold">
+                    {dailyMissions.filter(m => m.done).length}/{dailyMissions.length} 완료
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 text-[10px] font-bold text-amber-600">
+                  총 {dailyMissions.filter(m => !m.done).reduce((s, m) => s + m.reward, 0)}개 구입 가능
+                  <span className={`transition-transform ${isMissionOpen ? "rotate-180" : ""}`}>▼</span>
+                </div>
+              </button>
 
+              {isMissionOpen && (
+                <div className="space-y-2 animate-in slide-in-from-top-2 duration-150">
+                  {dailyMissions.map(mission => (
+                    <div
+                      key={mission.id}
+                      className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                        mission.done
+                          ? "bg-gray-50 border-gray-100 opacity-60"
+                          : "bg-white border-gray-200 shadow-sm"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-lg">{mission.icon}</span>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className={`text-xs font-black ${ mission.done ? "text-gray-400 line-through" : "text-gray-700" }`}>
+                              {mission.title}
+                            </span>
+                            <span className="text-[9px] bg-amber-100 text-amber-600 px-1.5 py-0.2 rounded font-bold">
+                              🍎 +{mission.reward}
+                            </span>
+                          </div>
+                          <p className="text-[9px] text-gray-400 font-bold mt-0.5">{mission.desc}</p>
+                        </div>
+                      </div>
+                      {mission.done ? (
+                        <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                          <span className="text-green-500 text-xs">✓</span>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            if (mission.id === "m1") { setActiveTab("chat"); setIsMissionOpen(false); }
+                            else if (mission.id === "m2") { setIsAddEventOpen(true); setIsMissionOpen(false); }
+                            else if (mission.id === "m3") { setActiveTab("community"); setIsMissionOpen(false); }
+                            else if (mission.id === "m4") { setIsMissionOpen(false); }
+                            else if (mission.id === "m5") { setIsShopOpen(true); setIsMissionOpen(false); }
+                          }}
+                          className="px-2.5 py-1 bg-blue-500 hover:bg-blue-600 text-white text-[9px] font-bold rounded-lg transition-colors shrink-0"
+                        >
+                          바로가기
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div className="flex gap-2 justify-center">
+              <button onClick={() => setIsShopOpen(true)} className="flex items-center gap-1 px-4 py-3 bg-gray-800 text-white font-bold text-xs rounded-xl shadow-sm hover:bg-gray-700 transition-colors"><ShoppingBag className="w-4 h-4" /> 소품 상점</button>
               <button onClick={() => { setActiveTab("chat"); setBubbleText("무슨 재밋는 이야기를 들려줄 거냥? 🐾"); }} className="flex items-center gap-1 px-4 py-3 bg-blue-500 text-white font-bold text-xs rounded-xl shadow-sm hover:bg-blue-600 transition-colors"><MessageSquare className="w-4 h-4" /> 대화하기</button>
               <button
                 onClick={() => handleShare()}
@@ -791,7 +993,7 @@ export default function Home() {
                     <div>
                       <div className="flex items-center gap-1.5">
                         <span className="font-bold text-xs text-gray-700">{post.author}</span>
-
+                        <span className="text-[8px] bg-gray-800 text-white px-1.5 py-0.2 rounded font-bold">Lv.{post.authorLevel}</span>
                         {post.hasBestBadge && <span className="text-[8px] bg-amber-500 text-white px-1.5 py-0.2 rounded font-bold">👑 상담왕</span>}
                       </div>
                       <span className="text-[9px] text-gray-400 font-bold">{post.date}</span>
@@ -907,7 +1109,9 @@ export default function Home() {
             <Dex
               collectedCats={collectedCats}
               currentCatMood={catMood}
+              level={level}
               testCount={testCount}
+              apples={apples}
               onSetCat={(mood) => {
                 setCatMood(mood);
                 setBubbleText(`[${CAT_CHARACTERS[mood].name}]로 변경했다냥! 반갑다냥! 💕`);
@@ -939,9 +1143,9 @@ export default function Home() {
             <div><h2 className="text-base font-bold text-gray-800">관리자 대시보드</h2><p className="text-xs text-gray-500">서비스 운영 현황 및 광고 링크 실시간 수정 패널냥 🛡️</p></div>
             {!isAdminLoggedIn ? (
               <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm space-y-4">
-                <h3 className="font-bold text-xs text-gray-700">관리자 비밀번호를 입력해달라냥 (기본: 123456)</h3>
+                <h3 className="font-bold text-xs text-gray-700">관리자 비밀번호를 입력해달라냥 (기본: 1234)</h3>
                 <input type="password" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="비밀번호 입력" className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 font-bold text-xs focus:outline-none" />
-                <button onClick={() => { if (adminPassword === ADMIN_PASSWORD) { setIsAdminLoggedIn(true); toast.success("관리자 권한으로 로그인했다냥! 🛡️"); } else toast.error("비밀번호가 틀렸다냥!"); }} className="w-full py-2.5 bg-gray-800 text-white font-bold text-xs rounded-xl">로그인</button>
+                <button onClick={() => { if (adminPassword === "1234" || adminPassword === "admin") { setIsAdminLoggedIn(true); toast.success("관리자 권한으로 로그인했다냥! 🛡️"); } else toast.error("비밀번호가 틀렸다냥!"); }} className="w-full py-2.5 bg-gray-800 text-white font-bold text-xs rounded-xl">로그인</button>
               </div>
             ) : (
               <div className="space-y-5">
@@ -971,43 +1175,11 @@ export default function Home() {
                     <button onClick={() => toast.success("광고 배너 설정이 실시간 반영되었다냥! 🍎")} className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-lg">광고 배너 업데이트</button>
                   </div>
                 </div>
-                {/* 게임 링크 관리 */}
-                <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm space-y-4">
-                  <h3 className="font-bold text-xs text-gray-800 border-b border-gray-50 pb-2">🎮 게임 링크 관리</h3>
-                  <div className="space-y-3">
-                    <div className="space-y-1"><label className="text-[10px] font-bold text-gray-400">마인드 블럭 링크</label><input type="text" value={adminSettings.gameLinks.mindBlock} onChange={(e) => setAdminSettings({...adminSettings, gameLinks: {...adminSettings.gameLinks, mindBlock: e.target.value}})} placeholder="https://example.com/mind-block" className="w-full px-3 py-2 rounded-lg border border-gray-200 font-bold text-xs" /></div>
-                    <div className="space-y-1"><label className="text-[10px] font-bold text-gray-400">음악듣기 링크</label><input type="text" value={adminSettings.gameLinks.musicListen} onChange={(e) => setAdminSettings({...adminSettings, gameLinks: {...adminSettings.gameLinks, musicListen: e.target.value}})} placeholder="https://example.com/music-listen" className="w-full px-3 py-2 rounded-lg border border-gray-200 font-bold text-xs" /></div>
-                    <button onClick={() => toast.success("게임 링크가 업데이트되었다냥! 🎮")} className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-lg">게임 링크 업데이트</button>
-                  </div>
-                </div>
-
-                {/* 페이지 이름 수정 */}
-                <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm space-y-4">
-                  <h3 className="font-bold text-xs text-gray-800 border-b border-gray-50 pb-2">📝 모든 페이지 이름 수정</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1"><label className="text-[9px] font-bold text-gray-400">홈</label><input type="text" value={adminSettings.pageNames.home} onChange={(e) => setAdminSettings({...adminSettings, pageNames: {...adminSettings.pageNames, home: e.target.value}})} className="w-full px-2 py-1 rounded-lg border border-gray-200 font-bold text-xs" /></div>
-                    <div className="space-y-1"><label className="text-[9px] font-bold text-gray-400">대화</label><input type="text" value={adminSettings.pageNames.chat} onChange={(e) => setAdminSettings({...adminSettings, pageNames: {...adminSettings.pageNames, chat: e.target.value}})} className="w-full px-2 py-1 rounded-lg border border-gray-200 font-bold text-xs" /></div>
-                    <div className="space-y-1"><label className="text-[9px] font-bold text-gray-400">일기</label><input type="text" value={adminSettings.pageNames.diary} onChange={(e) => setAdminSettings({...adminSettings, pageNames: {...adminSettings.pageNames, diary: e.target.value}})} className="w-full px-2 py-1 rounded-lg border border-gray-200 font-bold text-xs" /></div>
-                    <div className="space-y-1"><label className="text-[9px] font-bold text-gray-400">달력</label><input type="text" value={adminSettings.pageNames.calendar} onChange={(e) => setAdminSettings({...adminSettings, pageNames: {...adminSettings.pageNames, calendar: e.target.value}})} className="w-full px-2 py-1 rounded-lg border border-gray-200 font-bold text-xs" /></div>
-                    <div className="space-y-1"><label className="text-[9px] font-bold text-gray-400">마음 숬</label><input type="text" value={adminSettings.pageNames.community} onChange={(e) => setAdminSettings({...adminSettings, pageNames: {...adminSettings.pageNames, community: e.target.value}})} className="w-full px-2 py-1 rounded-lg border border-gray-200 font-bold text-xs" /></div>
-                    <div className="space-y-1"><label className="text-[9px] font-bold text-gray-400">리포트</label><input type="text" value={adminSettings.pageNames.report} onChange={(e) => setAdminSettings({...adminSettings, pageNames: {...adminSettings.pageNames, report: e.target.value}})} className="w-full px-2 py-1 rounded-lg border border-gray-200 font-bold text-xs" /></div>
-                  </div>
-                  <button onClick={() => toast.success("페이지 이름이 업데이트되었다냥! 📝")} className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-lg">페이지 이름 업데이트</button>
-                </div>
-
-                {/* 관리자 비밀번호 변경 */}
-                <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm space-y-4">
-                  <h3 className="font-bold text-xs text-gray-800 border-b border-gray-50 pb-2">🔐 관리자 비밀번호 변경</h3>
-                  <div className="space-y-3">
-                    <div className="space-y-1"><label className="text-[10px] font-bold text-gray-400">새 비밀번호</label><input type="password" value={newAdminPassword} onChange={(e) => setNewAdminPassword(e.target.value)} placeholder="새 비밀번호 입력" className="w-full px-3 py-2 rounded-lg border border-gray-200 font-bold text-xs" /></div>
-                    <div className="space-y-1"><label className="text-[10px] font-bold text-gray-400">비밀번호 재입력</label><input type="password" value={confirmAdminPassword} onChange={(e) => setConfirmAdminPassword(e.target.value)} placeholder="비밀번호 다시 입력" className="w-full px-3 py-2 rounded-lg border border-gray-200 font-bold text-xs" /></div>
-                    <button onClick={() => { if (newAdminPassword && newAdminPassword === confirmAdminPassword) { toast.success("비밀번호가 변경되었다냥! 🔐"); setNewAdminPassword(""); setConfirmAdminPassword(""); } else toast.error("비밀번호가 일치하지 않다냥!"); }} className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-lg">비밀번호 변경</button>
-                  </div>
-                </div>
-
                 <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm space-y-4">
                   <h3 className="font-bold text-xs text-gray-800 border-b border-gray-50 pb-2 flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-blue-500" /> 테스트 전용 제어기</h3>
                   <div className="grid grid-cols-2 gap-2">
+                    <button onClick={() => { setApples(prev => prev + 5); toast.success("사과 +5개 지급 완료냥 🍎"); }} className="py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold text-xs rounded-lg">🍎 사과 +5개</button>
+                    <button onClick={() => gainExp(40, "관리자 치트")} className="py-2 bg-amber-50 hover:bg-amber-100 text-amber-600 font-bold text-xs rounded-lg">✨ 경험치 +40</button>
                     <button onClick={() => { setLocalEvents([]); toast.success("모든 일정이 초기화되었다냥."); }} className="py-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs rounded-lg">🧹 일정 초기화</button>
                     <button onClick={() => { setIsAdminLoggedIn(false); setAdminPassword(""); toast.info("로그아웃했다냥."); }} className="py-2 bg-gray-100 text-gray-600 font-bold text-xs rounded-lg">🚪 로그아웃</button>
                   </div>
@@ -1066,7 +1238,93 @@ export default function Home() {
       </nav>
 
       {/* MODAL: Stripe 결제 상점 */}
+      {isStoreOpen && (
+        <div className="absolute inset-0 bg-black/30 z-50 flex items-end md:items-center justify-center p-4">
+          <div className="w-full max-w-[380px] bg-white rounded-3xl p-5 space-y-4 animate-in slide-in-from-bottom duration-200 border border-gray-100 shadow-xl">
+            <div className="flex items-center justify-between border-b border-gray-50 pb-2">
+              <div><h3 className="text-sm font-bold text-gray-800">사과 충전 & 프리미엄 상점</h3><p className="text-[10px] text-gray-400 font-bold">카드 번호 4242 4242 4242 4242로 테스트 결제 가능</p></div>
+              <button onClick={() => setIsStoreOpen(false)} className="p-1 rounded-lg hover:bg-gray-50"><X className="w-4 h-4 text-gray-400" /></button>
+            </div>
+            <div className="space-y-3">
+              {[
+                { id: "apple_small", name: "사과 10개 패키지", price: "$0.99", desc: "소품 상점 기본 아이템 구매에 딱 좋다냥!", emoji: "🍎", apples: 10 },
+                { id: "apple_medium", name: "사과 30개 패키지", price: "$2.49", desc: "고급 소품을 마음껏 구매할 수 있다냥!", emoji: "🍎🍎🍎", apples: 30 },
+                { id: "apple_large", name: "사과 100개 패키지", price: "$6.99", desc: "한정판 소품을 모두 해금하자냥!", emoji: "🎁", apples: 100 },
+                { id: "premium_monthly", name: "프리미엄 집사 멤버십", price: "$4.99/월", desc: "매달 사과 50개 + 한정판 소품 + 상담왕 배지!", emoji: "👑", apples: 50 }
+              ].map((product) => (
+                <div key={product.id} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50/50">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl shrink-0">{product.emoji}</span>
+                    <div><h4 className="font-bold text-xs text-gray-700">{product.name}</h4><p className="text-[9px] text-gray-400 font-bold">{product.desc}</p><p className="text-[10px] text-blue-600 font-black mt-0.5">🍎 +{product.apples}개</p></div>
+                  </div>
+                  <button onClick={() => handleStripeCheckout(product.id)} disabled={createCheckout.isPending} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-500 hover:bg-blue-600 text-white shadow-sm transition-all disabled:opacity-50 shrink-0">{createCheckout.isPending ? "..." : product.price}</button>
+                </div>
+              ))}
+            </div>
+            <p className="text-[9px] text-gray-400 text-center font-bold">테스트 카드: 4242 4242 4242 4242 | 유효기간: 미래 임의 날짜 | CVV: 임의 3자리</p>
+          </div>
+        </div>
+      )}
 
+      {/* MODAL: 소품 상점 */}
+      {isShopOpen && (
+        <div className="absolute inset-0 bg-black/30 z-50 flex items-end md:items-center justify-center p-4">
+          <div className="w-full max-w-[380px] bg-white rounded-3xl p-5 space-y-4 animate-in slide-in-from-bottom duration-200 border border-gray-100 shadow-xl">
+            <div className="flex items-center justify-between border-b border-gray-50 pb-2">
+              <div className="flex items-center gap-1.5"><h3 className="text-sm font-bold text-gray-800">꾸미기 소품 상점</h3><span className="text-[10px] bg-gray-50 border border-gray-100 text-gray-600 px-2 py-0.5 rounded-full flex items-center gap-1 font-bold">🍎 {apples}개</span></div>
+              <button onClick={() => setIsShopOpen(false)} className="p-1 rounded-lg hover:bg-gray-50"><X className="w-4 h-4 text-gray-400" /></button>
+            </div>
+
+            {/* 캐릭터 맞춤 추천 소품 */}
+            {CAT_CHARACTERS[catMood].themeItems.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5">
+                  <img src={CAT_CHARACTERS[catMood].image} alt="" className="w-5 h-5 object-contain" />
+                  <span className="text-[10px] font-black text-blue-600">{CAT_CHARACTERS[catMood].name.split(" ")[0]} 매첩 추천 소품 ✨</span>
+                </div>
+                <div className="space-y-1.5">
+                  {CAT_CHARACTERS[catMood].themeItems.map(itemId => {
+                    const item = SHOP_ITEMS.find(si => si.id === itemId);
+                    if (!item) return null;
+                    const isBought = myItems.includes(item.id);
+                    const isEquipped = equippedItems.includes(item.id);
+                    return (
+                      <div key={item.id} className="flex items-center justify-between p-2.5 rounded-xl border border-blue-100 bg-blue-50/50">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-xl shrink-0">{item.emoji}</span>
+                          <div>
+                            <h4 className="font-bold text-xs text-gray-700">{item.name}</h4>
+                            <p className="text-[9px] text-blue-500 font-bold">캐릭터 매첩 아이템 ⭐</p>
+                          </div>
+                        </div>
+                        <button onClick={() => handleBuyItem(item)} className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${isEquipped ? "bg-gray-800 text-white" : isBought ? "bg-gray-200 text-gray-700" : "bg-blue-500 hover:bg-blue-600 text-white shadow-sm"}`}>
+                          {isEquipped ? "장착 해제" : isBought ? "배치" : `🍎 ${item.price}`}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="border-t border-gray-100 pt-2">
+                  <span className="text-[9px] font-bold text-gray-400">전체 소품 목록</span>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
+              {SHOP_ITEMS.map((item) => {
+                const isBought = myItems.includes(item.id), isEquipped = equippedItems.includes(item.id);
+                return (
+                  <div key={item.id} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50/50">
+                    <div className="flex items-center gap-3"><span className="text-2xl shrink-0">{item.emoji}</span><div><h4 className="font-bold text-xs text-gray-700">{item.name}</h4><p className="text-[9px] text-gray-400 font-bold">{item.description}</p></div></div>
+                    <button onClick={() => handleBuyItem(item)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${isEquipped ? "bg-gray-800 text-white" : isBought ? "bg-gray-200 text-gray-700" : "bg-blue-500 hover:bg-blue-600 text-white shadow-sm"}`}>{isEquipped ? "장착 해제" : isBought ? "방에 배치" : `🍎 ${item.price}`}</button>
+                  </div>
+                );
+              })}
+            </div>
+            <button onClick={() => { setIsShopOpen(false); setIsStoreOpen(true); }} className="w-full py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold text-xs rounded-lg flex items-center justify-center gap-1"><CreditCard className="w-3.5 h-3.5" /> 사과가 부족하면? 충전하러 가기냥 →</button>
+          </div>
+        </div>
+      )}
 
       {/* MODAL: 우편함 */}
       {isMailOpen && (
@@ -1125,15 +1383,34 @@ export default function Home() {
         </div>
       )}
 
+      {/* MODAL: 레벨업 축하 */}
+      {isLevelUpModalOpen && (
+        <div className="absolute inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div onClick={() => setIsLevelUpModalOpen(false)} className="w-full max-w-[320px] bg-white rounded-3xl p-6 text-center space-y-4 border border-gray-100 shadow-2xl cursor-pointer animate-in zoom-in-95 duration-200">
+            <div className="text-4xl">🎉🍎👑</div>
+            <h3 className="text-lg font-black text-gray-800">LEVEL UP!</h3>
+            <p className="text-xs font-bold text-gray-600 leading-relaxed">드림님 축하한다냥! 드림이와 마음을 나눠 레벨이 올랐다냥!</p>
+            <div className="bg-blue-50 text-blue-600 p-3 rounded-xl border border-blue-100 text-xs font-bold">보상: 사과 🍎 3개 획득!</div>
+            <div className="text-[10px] text-gray-400 font-bold animate-pulse">[ 화면을 탭하면 방으로 돌아갑니다냥 ]</div>
+          </div>
+        </div>
+      )}
 
-
-      {/* MODAL: 심리테스트 재도전 */}
+      {/* MODAL: 심리테스트 재도전 사과 10개 차감 확인 모달 */}
       {isTestPayConfirmOpen && (
         <div className="absolute inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
           <div className="w-full max-w-[320px] bg-white rounded-3xl p-6 text-center space-y-4 border border-gray-100 shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="text-4xl">🐾</div>
+            <div className="text-4xl">🍎🔒</div>
             <h3 className="text-base font-black text-gray-800">심리테스트 재도전</h3>
-            <p className="text-xs font-bold text-gray-600 leading-relaxed">마음을 다시 알아보기 위한 심리테스트를 다시 진행하다냥!</p>
+            <p className="text-xs font-bold text-gray-600 leading-relaxed">심리테스트는 무료로 2회까지 진행할 수 있다냥.<br />
+              3회부터는 매번 사과 <span className="text-blue-500 font-black">🍎 10개</span>를 사용해야 재도전할 수 있다냥.</p>
+            <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 space-y-1">
+              <div className="text-xs font-bold text-amber-700">현재 보유 사과: 🍎 {apples}개</div>
+              <div className="text-xs font-bold text-amber-600">차감 예정: 🍎 10개 사용</div>
+              <div className={`text-xs font-bold ${apples >= 10 ? "text-green-600" : "text-red-500"}`}>
+                {apples >= 10 ? `재도전 후 남은 사과: 🍎 ${apples - 10}개` : "⚠️ 사과가 부족하다냥! 상점에서 충전해달라냥."}
+              </div>
+            </div>
             <div className="flex gap-3">
               <button
                 onClick={() => setIsTestPayConfirmOpen(false)}
@@ -1143,6 +1420,14 @@ export default function Home() {
               </button>
               <button
                 onClick={() => {
+                  if (apples < 10) {
+                    toast.error("사과가 부족하다냥! 상점에서 사과를 충전해달라냥 🍎");
+                    setIsTestPayConfirmOpen(false);
+                    setIsStoreOpen(true);
+                    return;
+                  }
+                  // 사과 10개 차감
+                  setApples(prev => prev - 10);
                   setTestCount(prev => prev + 1);
                   setIsTestPayConfirmOpen(false);
                   setIsTestCompleted(false);
@@ -1150,11 +1435,12 @@ export default function Home() {
                   setTestScores({ unfair: 0, anxious: 0, lonely: 0, lethargic: 0, angry: 0, love: 0, shy: 0, shocked: 0, bored: 0, depressed: 0, excited: 0, scared: 0, proud: 0, curious: 0, guilty: 0, relaxed: 0 });
                   const shuffled = [...QUESTION_BANK].sort(() => 0.5 - Math.random());
                   setActiveQuestions(shuffled.slice(0, 10));
-                  toast.success(`심리테스트 재도전 시작! (${testCount + 1}회차) 이번날단 어떤 냥이 나올까냥? 🐾`);
+                  toast.success(`사과 🍎 10개를 사용해 심리테스트 재도전 시작! (${testCount + 1}회차) 이번엔 어떤 냥이가 나올까냥? 🐾`);
                 }}
-                className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-xl transition-colors shadow-sm"
+                disabled={apples < 10}
+                className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-xl transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                시작!
+                🍎 10개 사용하고 재도전!
               </button>
             </div>
           </div>

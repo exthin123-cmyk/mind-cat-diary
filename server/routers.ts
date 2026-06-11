@@ -36,7 +36,7 @@ export const appRouter = router({
       const existing = await db.select().from(userProfiles).where(eq(userProfiles.userId, ctx.user.id)).limit(1);
       if (existing.length > 0) return existing[0];
       // 없으면 기본 프로필 생성
-      await db.insert(userProfiles).values({ userId: ctx.user.id, level: 1, exp: 0, apples: 5, isPremium: 0 });
+      await db.insert(userProfiles).values({ userId: ctx.user.id, isPremium: 0 });
       const created = await db.select().from(userProfiles).where(eq(userProfiles.userId, ctx.user.id)).limit(1);
       return created[0] || null;
     }),
@@ -47,9 +47,6 @@ export const appRouter = router({
         nickname: z.string().optional(),
         catName: z.string().optional(),
         catMood: z.string().optional(),
-        level: z.number().optional(),
-        exp: z.number().optional(),
-        apples: z.number().optional(),
         isPremium: z.number().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
@@ -57,7 +54,7 @@ export const appRouter = router({
         if (!db) return null;
         const existing = await db.select().from(userProfiles).where(eq(userProfiles.userId, ctx.user.id)).limit(1);
         if (existing.length === 0) {
-          await db.insert(userProfiles).values({ userId: ctx.user.id, ...input, level: input.level ?? 1, exp: input.exp ?? 0, apples: input.apples ?? 5, isPremium: input.isPremium ?? 0 });
+          await db.insert(userProfiles).values({ userId: ctx.user.id, ...input, isPremium: input.isPremium ?? 0 });
         } else {
           await db.update(userProfiles).set(input).where(eq(userProfiles.userId, ctx.user.id));
         }
@@ -141,16 +138,7 @@ solution = typeof rawSol === "string" ? rawSol : "";
           musicRecommendation,
         });
 
-        // 경험치 +30 지급
-        const profileResult = await db.select().from(userProfiles).where(eq(userProfiles.userId, ctx.user.id)).limit(1);
-        if (profileResult.length > 0) {
-          const profile = profileResult[0];
-          const newExp = (profile.exp || 0) + 30;
-          const newLevel = newExp >= 100 ? (profile.level || 1) + 1 : (profile.level || 1);
-          const finalExp = newExp >= 100 ? newExp - 100 : newExp;
-          const newApples = newExp >= 100 ? (profile.apples || 5) + 3 : (profile.apples || 5);
-          await db.update(userProfiles).set({ exp: finalExp, level: newLevel, apples: newApples }).where(eq(userProfiles.userId, ctx.user.id));
-        }
+
 
         return { success: true, solution, musicRecommendation };
       }),
@@ -227,16 +215,7 @@ const catReply = typeof rawContent === "string" ? rawContent : "그렇구냥! �
             await db.insert(chatMessages).values({ userId: ctx.user.id, sender: "user" as const, text: input.message });
             await db.insert(chatMessages).values({ userId: ctx.user.id, sender: "cat" as const, text: catReply });
 
-            // 경험치 +15 지급
-            const profileResult = await db.select().from(userProfiles).where(eq(userProfiles.userId, ctx.user.id)).limit(1);
-            if (profileResult.length > 0) {
-              const profile = profileResult[0];
-              const newExp = (profile.exp || 0) + 15;
-              const newLevel = newExp >= 100 ? (profile.level || 1) + 1 : (profile.level || 1);
-              const finalExp = newExp >= 100 ? newExp - 100 : newExp;
-              const newApples = newExp >= 100 ? (profile.apples || 5) + 3 : (profile.apples || 5);
-              await db.update(userProfiles).set({ exp: finalExp, level: newLevel, apples: newApples }).where(eq(userProfiles.userId, ctx.user.id));
-            }
+
           }
 
           return { reply: catReply, leveledUp: false };
