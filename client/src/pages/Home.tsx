@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { MoodType, CAT_CHARACTERS, ScheduleEvent, FeedPost, QUESTION_BANK } from "../lib/types";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis } from "recharts";
 import Dex from "./Dex";
-import AdminEditor from "./AdminEditor";
+import AdminDashboard from "./AdminDashboard";
 
 const LOFI_PLAYLIST: Record<string, { title: string; url: string }> = {
   "기쁨 😊": { title: "포근한 햇살 Lofi ☀️", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
@@ -962,7 +962,7 @@ export default function Home() {
         {/* 관리자 탭 */}
         {activeTab === "admin" && isAdminLoggedIn && (
           <div className="flex-1 overflow-hidden h-full">
-            <AdminEditor />
+            <AdminDashboard />
           </div>
         )}
       </main>
