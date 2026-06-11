@@ -70,6 +70,9 @@ export default function Home() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [activeQuestions, setActiveQuestions] = useState<typeof QUESTION_BANK>([]);
   const [testCount, setTestCount] = useState(0);
+  const [todayTestDone, setTodayTestDone] = useState(false);
+  const [lastTestDate, setLastTestDate] = useState("");
+  const [showCardResult, setShowCardResult] = useState(false);
   const [isTestPayConfirmOpen, setIsTestPayConfirmOpen] = useState(false);
   const [testScores, setTestScores] = useState<Record<MoodType, number>>({
     unfair: 0, anxious: 0, lonely: 0, lethargic: 0, angry: 0, love: 0, shy: 0, shocked: 0, bored: 0, depressed: 0,
@@ -208,6 +211,13 @@ export default function Home() {
   useEffect(() => {
     // 감정 테스트 질문 추출 (5개)
     setActiveQuestions(pickRandomQuestions());
+
+    // 오늘 테스트 여부 확인
+    const savedLastTestDate = localStorage.getItem('mindcat_last_test_date');
+    if (savedLastTestDate === new Date().toISOString().split('T')[0]) {
+      setTodayTestDone(true);
+      setLastTestDate(savedLastTestDate);
+    }
     // 관리자 설정 로드
     const savedAdminSettings = localStorage.getItem(STORAGE_KEYS.adminSettings);
     if (savedAdminSettings) {
@@ -299,8 +309,20 @@ export default function Home() {
     } else {
       const maxMood = Object.entries(newScores).reduce((a, b) => a[1] > b[1] ? a : b)[0] as MoodType;
       setCatMood(maxMood);
-      if (!collectedCats.includes(maxMood)) {
-        setCollectedCats([...collectedCats, maxMood]);
+      const isNewCat = !collectedCats.includes(maxMood);
+      if (isNewCat) {
+        const newCollected = [...collectedCats, maxMood];
+        setCollectedCats(newCollected);
+        // localStorage 업데이트
+        const savedUser = localStorage.getItem(STORAGE_KEYS.currentUser);
+        if (savedUser) {
+          try {
+            const userData = JSON.parse(savedUser);
+            userData.catMood = maxMood;
+            userData.collectedCats = newCollected;
+            localStorage.setItem(STORAGE_KEYS.currentUser, JSON.stringify(userData));
+          } catch (e) {}
+        }
       }
       setIsTestCompleted(true);
       setTestCount(testCount + 1);
@@ -309,11 +331,21 @@ export default function Home() {
         unfair: 0, anxious: 0, lonely: 0, lethargic: 0, angry: 0, love: 0, shy: 0, shocked: 0, bored: 0, depressed: 0,
         excited: 0, scared: 0, proud: 0, curious: 0, guilty: 0, relaxed: 0
       });
-      // 다음 테스트를 위해 새 5개 질문 추출
       setActiveQuestions(pickRandomQuestions());
       setOnboardingStep(0);
       setIsOnboardingOpen(false);
-      toast.success(`${CAT_CHARACTERS[maxMood].name}를 만났다냥! 🐾`);
+      // 매일 1번 제한 저장
+      const today = new Date().toISOString().split('T')[0];
+      localStorage.setItem('mindcat_last_test_date', today);
+      setTodayTestDone(true);
+      setLastTestDate(today);
+      // 카드 결과 표시
+      setShowCardResult(true);
+      if (isNewCat) {
+        toast.success(`새로운 카드! ${CAT_CHARACTERS[maxMood].name}를 획득했다냥! 🎉`);
+      } else {
+        toast.success(`${CAT_CHARACTERS[maxMood].name}를 만났다냥! (이미 보유 중) 🐾`);
+      }
     }
   };
 
@@ -332,15 +364,17 @@ export default function Home() {
   };
 
   const handleShare = async () => {
-    const text = `${userName}의 감정냥이는 ${CAT_CHARACTERS[catMood].name}다냥! 🐾 Mind Cat Diary에서 나만의 감정냥이를 만나보세요!`;
+    const siteUrl = window.location.origin;
+    const cat = CAT_CHARACTERS[catMood];
+    const text = `🐾 나의 감정냥이 카드\n\n${cat.emoji} ${cat.name}\n"${cat.quote}"\n\n나도 감정냥 받기 👉 ${siteUrl}`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: "Mind Cat Diary", text });
+        await navigator.share({ title: `나의 감정냥이: ${cat.name}`, text, url: siteUrl });
       } else {
         await navigator.clipboard.writeText(text);
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
-        toast.success("공유 링크 복사됨냥!");
+        toast.success("카드 공유 링크가 복사됐다냥! 🐾");
       }
     } catch (err) {
       console.error("Share failed:", err);
@@ -414,14 +448,11 @@ export default function Home() {
           ))}
         </div>
         <div className="px-6 py-6 space-y-3">
-          <button onClick={() => window.location.href = getLoginUrl()} className="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm rounded-2xl transition-colors shadow-md flex items-center justify-center gap-2">
-            <LogIn className="w-4 h-4" /> Manus 계정으로 로그인 (데이터 영구 저장)
+          <button onClick={() => setAuthView("signup")} className="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm rounded-2xl transition-colors shadow-md flex items-center justify-center gap-2">
+            <UserPlus className="w-4 h-4" /> 시작하기 🐾
           </button>
-          <button onClick={() => setAuthView("signup")} className="w-full py-3 bg-white hover:bg-gray-50 text-gray-700 font-bold text-sm rounded-2xl border border-gray-200 transition-colors flex items-center justify-center gap-2">
-            <UserPlus className="w-4 h-4" /> 일반 계정으로 가입하기냥 🐾
-          </button>
-          <button onClick={() => setAuthView("admin-login")} className="w-full py-3 bg-gray-800 hover:bg-gray-900 text-white font-bold text-sm rounded-2xl border border-gray-700 transition-colors flex items-center justify-center gap-2">
-            <Shield className="w-4 h-4" /> 관리자 로그인
+          <button onClick={() => setAuthView("admin-login")} className="w-full py-2.5 text-gray-400 hover:text-gray-600 font-bold text-xs transition-colors flex items-center justify-center gap-1">
+            <Shield className="w-3 h-3" /> 관리자 로그인
           </button>
         </div>
       </div>
@@ -587,11 +618,18 @@ export default function Home() {
           <button onClick={toggleMusic} className={`p-2 rounded-xl transition-all border ${isPlaying ? "bg-blue-50 border-blue-200 text-blue-600" : "bg-gray-50 border-gray-100 text-gray-600"}`}>
             <Music className={`w-4 h-4 ${isPlaying ? "animate-spin" : ""}`} />
           </button>
-          {isAuthenticated ? (
-            <button onClick={() => logout()} className="p-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-100 text-xs font-bold text-gray-600">로그아웃</button>
-          ) : (
-            <button onClick={() => setIsSettingsOpen(true)} className="p-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-100"><Settings className="w-4 h-4 text-gray-600" /></button>
-          )}
+          <button onClick={() => {
+            localStorage.removeItem(STORAGE_KEYS.currentUser);
+            setAuthView("landing");
+            setUserName("드림님");
+            setCatName("드림이");
+            setCatMood("unfair");
+            setCollectedCats(["unfair"]);
+            setIsTestCompleted(false);
+            setIsAdminLoggedIn(false);
+            if (isAuthenticated) logout();
+            toast.success("로그아웃 됐다냥!");
+          }} className="p-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-100 text-xs font-bold text-gray-600">로그아웃</button>
         </div>
       </header>
 
@@ -645,16 +683,35 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="flex gap-2 justify-center">
+            <div className="flex gap-2 justify-center flex-wrap">
               <button onClick={() => { setActiveTab("chat"); setBubbleText("무슨 재밋는 이야기를 들려줄 거냥? 🐾"); }} className="flex items-center gap-1 px-4 py-3 bg-blue-500 text-white font-bold text-xs rounded-xl shadow-sm hover:bg-blue-600 transition-colors"><MessageSquare className="w-4 h-4" /> 대화하기</button>
-              <button
-                onClick={() => handleShare()}
-                className="flex items-center gap-1 px-4 py-3 bg-pink-500 hover:bg-pink-600 text-white font-bold text-xs rounded-xl shadow-sm transition-colors"
-              >
-                {isCopied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
-                공유
+              <button onClick={() => handleShare()} className="flex items-center gap-1 px-4 py-3 bg-pink-500 hover:bg-pink-600 text-white font-bold text-xs rounded-xl shadow-sm transition-colors">
+                {isCopied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />} 공유
               </button>
+              {!todayTestDone ? (
+                <button onClick={() => { setIsTestCompleted(false); setActiveQuestions(pickRandomQuestions()); }} className="flex items-center gap-1 px-4 py-3 bg-green-500 hover:bg-green-600 text-white font-bold text-xs rounded-xl shadow-sm transition-colors">🎴 오늘의 감정 테스트</button>
+              ) : (
+                <button disabled className="flex items-center gap-1 px-4 py-3 bg-gray-200 text-gray-400 font-bold text-xs rounded-xl shadow-sm cursor-not-allowed">✅ 오늘 테스트 완료</button>
+              )}
             </div>
+
+            {/* 카드 결과 모달 */}
+            {showCardResult && (
+              <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+                <div className="w-full max-w-xs bg-white rounded-3xl p-6 text-center space-y-4 animate-in fade-in zoom-in">
+                  <p className="text-xs font-bold text-gray-400">오늘의 감정 카드</p>
+                  <div className="text-5xl">{CAT_CHARACTERS[catMood].emoji}</div>
+                  <img src={CAT_CHARACTERS[catMood].image} alt="" className="w-32 h-32 mx-auto object-contain" />
+                  <h3 className="text-lg font-black text-gray-800">{CAT_CHARACTERS[catMood].name}</h3>
+                  <p className="text-xs text-gray-500 font-bold leading-relaxed">{CAT_CHARACTERS[catMood].description}</p>
+                  <p className="text-xs text-blue-500 font-bold italic">"{CAT_CHARACTERS[catMood].quote}"</p>
+                  <div className="flex gap-2">
+                    <button onClick={() => setShowCardResult(false)} className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-xl transition-colors">확인</button>
+                    <button onClick={() => { setShowCardResult(false); handleShare(); }} className="flex-1 py-3 bg-pink-500 hover:bg-pink-600 text-white font-bold text-xs rounded-xl transition-colors">공유하기</button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
