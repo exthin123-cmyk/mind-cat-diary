@@ -961,14 +961,8 @@ export default function Home() {
 
         {/* 관리자 탭 */}
         {activeTab === "admin" && isAdminLoggedIn && (
-          <div className="flex flex-col h-full">
-            <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between shrink-0">
-              <h2 className="text-sm font-black text-gray-800">🛡️ 관리자 에디터</h2>
-              <button onClick={() => { setIsAdminLoggedIn(false); setActiveTab("room"); toast.success("관리자 로그아웃!"); }} className="text-xs font-bold text-gray-600 hover:text-red-600">로그아웃</button>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <AdminEditor />
-            </div>
+          <div className="flex-1 overflow-hidden h-full">
+            <AdminEditor />
           </div>
         )}
       </main>
