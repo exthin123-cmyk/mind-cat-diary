@@ -363,11 +363,12 @@ export default function Home() {
     for (let day = 1; day <= daysInMonth; day++) {
       const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
       const isSelected = selectedDateStr === dateStr;
-      const hasEvent = !!diaries[dateStr];
+      const diary = diaries[dateStr];
+      const moodEmoji = diary ? diary.mood.split(" ")[0] : null;
       days.push(
-        <button key={day} onClick={() => setSelectedDateStr(dateStr)} className={`h-10 w-full flex flex-col items-center justify-center rounded-lg transition-all relative ${isSelected ? "bg-blue-500 text-white font-bold" : "bg-white text-black hover:bg-gray-50"}`}>
-          <span className="text-xs">{day}</span>
-          {hasEvent && <span className="absolute bottom-1 w-1.5 h-1.5 bg-pink-500 rounded-full"></span>}
+        <button key={day} onClick={() => setSelectedDateStr(dateStr)} className={`h-11 w-full flex flex-col items-center justify-center rounded-lg transition-all relative ${isSelected ? "bg-blue-500 text-white font-bold" : "bg-white text-black hover:bg-gray-50"}`}>
+          <span className="text-[10px]">{day}</span>
+          {moodEmoji && <span className="text-[10px] leading-none">{moodEmoji}</span>}
         </button>
       );
     }
@@ -573,8 +574,8 @@ export default function Home() {
 
   // === 메인 앱 ===
   return (
-    <div className="min-h-screen md:flex md:items-center md:justify-center md:bg-gray-100 md:p-4">
-    <div className="w-full md:max-w-[430px] md:h-[860px] flex flex-col relative bg-white font-sans overflow-hidden md:rounded-3xl md:shadow-2xl">
+    <div className="min-h-screen bg-white md:bg-gray-100 md:flex md:items-center md:justify-center md:p-4">
+    <div className="w-full h-screen md:max-w-[430px] md:h-[860px] flex flex-col relative bg-white font-sans overflow-hidden md:rounded-3xl md:shadow-2xl">
       {/* TOP BAR */}
       <header className="px-5 py-3.5 flex items-center justify-between border-b border-gray-100 bg-white z-10">
         <button onClick={() => setIsMailOpen(true)} className="relative p-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-100">
